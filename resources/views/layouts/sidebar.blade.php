@@ -89,7 +89,7 @@
                 SJ
             </div>
             <div>
-                <p class="font-medium text-gray-900">Sarah Johnson</p>
+                <p class="font-medium text-gray-900 capitalize">{{ Auth::user()->name }}</p>
                 <p class="text-sm text-gray-500">Administrator</p>
             </div>
         </div>
