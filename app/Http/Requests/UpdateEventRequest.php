@@ -36,7 +36,7 @@ class UpdateEventRequest extends FormRequest
             'days.*.locations.*.id'              => ['nullable', 'integer'],
             'days.*.locations.*.name'            => ['required_with:days.*.locations.*.link_title,days.*.locations.*.link_url', 'string', 'max:255'],
             'days.*.locations.*.link_title'      => ['nullable', 'string', 'max:255'],
-            'days.*.locations.*.link_url'        => ['nullable', 'url'],
+            'days.*.locations.*.link_url'        => ['nullable'],
             'days.*.locations.*.sort_order'      => ['nullable', 'integer', 'min:0'],
 
             // Details
@@ -50,7 +50,7 @@ class UpdateEventRequest extends FormRequest
             'days.*.resources'                   => ['array'],
             'days.*.resources.*.id'              => ['nullable', 'integer'],
             'days.*.resources.*.title'           => ['required_with:days.*.resources.*.url', 'string', 'max:255'],
-            'days.*.resources.*.url'             => ['nullable', 'url'],
+            'days.*.resources.*.url'             => ['nullable'],
             'days.*.resources.*.sort_order'      => ['nullable', 'integer', 'min:0'],
 
             // Sponsors
