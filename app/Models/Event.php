@@ -30,4 +30,9 @@ class Event extends Model
     {
         return $this->hasMany(EventSponsor::class)->orderBy('sort_order');
     }
+    public function participants()
+{
+    return $this->hasMany(EventParticipant::class);
+}
+
 }

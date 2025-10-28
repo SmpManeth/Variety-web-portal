@@ -1,21 +1,52 @@
 <x-app-layout>
     <div class="max-w-7xl mx-auto p-6"
-         x-data="eventShow({ days: {{ $daysJson }} })">
+        x-data="{
+         days: {{ $daysJson }},
+         selected: 0,
+         showParticipants: false,
+         openModal: false,
+         get current() { return this.days[this.selected] || {}; },
+         select(idx) {
+             this.selected = idx;
+             if (window.innerWidth < 1024) {
+                 setTimeout(() => {
+                     document.querySelector('section.lg\\:col-span-8')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                 }, 0);
+             }
+         },
+         toggleParticipants() {
+             this.showParticipants = !this.showParticipants;
+             if (this.showParticipants) {
+                 // Wait for render, then scroll
+                 this.$nextTick(() => {
+                     document.getElementById('participants-section')?.scrollIntoView({
+                         behavior: 'smooth',
+                         block: 'start'
+                     });
+                 });
+             }
+         }
+     }">
 
         <!-- Top: Back + Title + Actions -->
         <div class="flex items-center justify-between">
             <a href="{{ route('events.index') }}"
-               class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900">
                 <i class="fa-solid fa-chevron-left"></i>
                 Back to Events
             </a>
 
             <div class="flex items-center gap-2">
-                <a href="#" class="hidden md:inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
-                    <i class="fa-solid fa-users"></i> Manage Participants
+                <a href="#"
+                    @click.prevent="toggleParticipants()"
+                    class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                    <i class="fa-solid fa-users"></i>
+                    <span x-text="showParticipants ? 'Hide Participants' : 'Manage Participants'"></span>
                 </a>
+
+
                 <a href="{{ route('events.edit', $event) }}"
-                   class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                     <i class="fa-solid fa-pen"></i> Edit Event
                 </a>
             </div>
@@ -101,9 +132,9 @@
 
                         <template x-for="(d, idx) in days" :key="idx">
                             <button type="button"
-                                    @click="select(idx)"
-                                    class="w-full text-left rounded-lg px-3 py-3 border transition"
-                                    :class="selected === idx ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-white hover:bg-gray-50'">
+                                @click="select(idx)"
+                                class="w-full text-left rounded-lg px-3 py-3 border transition"
+                                :class="selected === idx ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-white hover:bg-gray-50'">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-sm font-semibold text-gray-900" x-text="d.title"></p>
@@ -128,7 +159,7 @@
 
                     <template x-if="current.image">
                         <img :src="current.image" alt=""
-                             class="w-full h-56 md:h-64 rounded-lg object-cover">
+                            class="w-full h-56 md:h-64 rounded-lg object-cover">
                     </template>
 
                     <template x-if="!current.image">
@@ -141,6 +172,107 @@
                         <p class="mt-3 text-sm text-gray-600" x-text="current.subtitle"></p>
                     </template>
                 </div>
+
+                <!-- Participants Management -->
+                <section id="participants-section" x-show="showParticipants" x-transition class="mt-6 space-y-6">
+                    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                                <i class="fa-solid fa-user-group text-red-600"></i>
+                                Event Participants ({{ $event->participants->count() }})
+                            </h2>
+
+                            <div class="flex gap-3">
+                                <form method="POST" action="{{ route('participants.import', $event) }}"
+                                    enctype="multipart/form-data" class="flex items-center gap-2">
+                                    @csrf
+                                    <input type="file" name="file" accept=".xlsx,.xls"
+                                        id="excelImport" class="hidden"
+                                        onchange="this.form.submit()">
+                                    <button type="button" onclick="document.getElementById('excelImport').click()"
+                                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                                        <i class="fa-solid fa-upload"></i> Import Excel
+                                    </button>
+                                </form>
+
+                                <a href="{{ route('participants.template') }}"
+                                    class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                                    <i class="fa-solid fa-file-arrow-down"></i> Download Template
+                                </a>
+
+                                <button @click="openModal = true"
+                                    class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                                    <i class="fa-solid fa-user-plus"></i> Add Participant
+                                </button>
+                            </div>
+                        </div>
+
+                        <input type="text" placeholder="Search participants by name or email..."
+                            x-model="search"
+                            class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 mb-4" />
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm border-t">
+                                <thead class="bg-gray-50">
+                                    <tr class="text-left text-gray-600">
+                                        <th class="px-4 py-2 font-medium">Name</th>
+                                        <th class="px-4 py-2 font-medium">Age</th>
+                                        <th class="px-4 py-2 font-medium">Contact</th>
+                                        <th class="px-4 py-2 font-medium">Emergency Contact</th>
+                                        <th class="px-4 py-2 font-medium">Status</th>
+                                        <th class="px-4 py-2 font-medium text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($event->participants as $p)
+                                    <tr>
+                                        <td class="px-4 py-2 font-semibold text-gray-900">
+                                            {{ $p->full_name }}
+                                            <div class="text-xs text-gray-500">{{ $p->email }}</div>
+                                        </td>
+                                        <td class="px-4 py-2">{{ $p->age ?? '—' }}</td>
+                                        <td class="px-4 py-2">{{ $p->phone ?? '—' }}</td>
+                                        <td class="px-4 py-2">
+                                            {{ $p->emergency_contact_name ?? '—' }}
+                                            <div class="text-xs text-gray-500">{{ $p->emergency_contact_relationship }}</div>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <span class="px-2 py-0.5 text-xs rounded-full font-medium
+                                                 {{ $p->status === 'active' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }}">
+                                                {{ $p->status }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-2 text-right flex justify-end gap-2">
+                                            <form method="POST" action="{{ route('participants.destroy', [$event, $p]) }}">
+                                                @csrf @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-red-600 hover:text-red-800"
+                                                    onclick="return confirm('Delete participant?')">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                    @if($event->participants->isEmpty())
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-6 text-center text-gray-500">No participants yet.</td>
+                                    </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add Modal -->
+                    <div x-show="openModal" x-cloak
+                        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                        <div @click.outside="openModal = false"
+                            class="bg-white rounded-xl w-full max-w-2xl p-6">
+                            @include('pages.events.participants._create-form', ['event' => $event])
+                        </div>
+                    </div>
+                </section>
 
                 <!-- Key Locations -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
@@ -158,7 +290,7 @@
                             <span class="text-sm text-gray-800" x-text="loc.name"></span>
                             <template x-if="loc.link_url && loc.link_title">
                                 <a :href="loc.link_url" target="_blank"
-                                   class="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                                    class="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
                                     <i class="fa-solid fa-up-right-from-square text-[11px]"></i>
                                     <span x-text="loc.link_title"></span>
                                 </a>
@@ -182,6 +314,10 @@
                     </template>
                 </div>
 
+
+
+
+
                 <!-- Additional Resources -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
                     <h4 class="text-sm font-semibold text-gray-900 mb-3">Additional Resources</h4>
@@ -193,7 +329,7 @@
                     <div class="flex flex-wrap gap-3">
                         <template x-for="res in current.resources" :key="res.title + res.url">
                             <a :href="res.url" target="_blank"
-                               class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50">
                                 <i class="fa-solid fa-up-right-from-square text-[11px]"></i>
                                 <span x-text="res.title"></span>
                             </a>
@@ -210,35 +346,40 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 @forelse ($event->sponsors as $s)
-                    <div class="rounded-xl border border-gray-200 bg-white p-4 text-center">
-                        <div class="mx-auto h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                            @if($s->logo_url)
-                                <img src="{{ $s->logo_url }}" alt="{{ $s->name }}" class="h-10 object-contain">
-                            @else
-                                <i class="fa-regular fa-image text-gray-400"></i>
-                            @endif
-                        </div>
-                        <p class="mt-3 text-xs font-semibold text-gray-800">{{ $s->name }}</p>
+                <div class="rounded-xl border border-gray-200 bg-white p-4 text-center">
+                    <div class="mx-auto h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                        @if($s->logo_url)
+                        <img src="{{ $s->logo_url }}" alt="{{ $s->name }}" class="h-10 object-contain">
+                        @else
+                        <i class="fa-regular fa-image text-gray-400"></i>
+                        @endif
                     </div>
+                    <p class="mt-3 text-xs font-semibold text-gray-800">{{ $s->name }}</p>
+                </div>
                 @empty
-                    <p class="text-sm text-gray-500">No sponsors added.</p>
+                <p class="text-sm text-gray-500">No sponsors added.</p>
                 @endforelse
             </div>
         </section>
     </div>
 
     <script>
-        function eventShow({ days }) {
+        function eventShow({
+            days
+        }) {
             return {
                 days: days || [],
                 selected: 0,
-                get current() { return this.days[this.selected] || {}; },
+                get current() {
+                    return this.days[this.selected] || {};
+                },
                 select(idx) {
                     this.selected = idx;
                     if (window.innerWidth < 1024) {
                         setTimeout(() => {
                             document.querySelector('section.lg\\:col-span-8')?.scrollIntoView({
-                                behavior: 'smooth', block: 'start'
+                                behavior: 'smooth',
+                                block: 'start'
                             });
                         }, 0);
                     }
