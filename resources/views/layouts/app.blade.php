@@ -19,12 +19,13 @@
 </head>
 
 <body class="font-sans antialiased">
-    <div class="">
+<div class="flex min-h-screen">
+        <!-- Sidebar -->
         @include('layouts.sidebar')
 
-        <!-- Page Content -->
-        <main>
-            {{ $slot }}
+        <!-- Main Content -->
+        <main class="flex-1 min-h-screen p-6 bg-gray-50 overflow-y-auto">
+            {{ $slot ?? '' }}
         </main>
     </div>
 </body>

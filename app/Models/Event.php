@@ -17,6 +17,10 @@ class Event extends Model
         'max_participants'
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
     public function days()
     {
         return $this->hasMany(EventDay::class)->orderBy('sort_order');
