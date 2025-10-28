@@ -10,6 +10,7 @@ use App\Models\EventDayDetail;
 use App\Models\EventDayLocation;
 use App\Models\EventDayResource;
 use App\Models\EventSponsor;
+use App\Services\EventDeletionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -437,8 +438,17 @@ class EventController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Event $event)
+    public function destroy(Event $event, EventDeletionService $deleter)
     {
-        //
+        try {
+            DB::transaction(fn() => $deleter->delete($event));
+    
+            return redirect()
+                ->route('events.index')
+                ->with('success', 'Event and all related data deleted successfully.');
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->withErrors(['delete' => 'Failed to delete event. Please try again.']);
+        }
     }
 }

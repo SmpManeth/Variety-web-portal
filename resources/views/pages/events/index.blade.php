@@ -23,27 +23,6 @@
             </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="flex flex-wrap items-center gap-3 mb-6">
-            <button @click="tab='active'"
-                    :class="tab==='active' ? 'bg-red-100 text-red-600' : 'bg-white text-gray-700 border'"
-                    class="rounded-full px-4 py-1.5 text-sm font-medium border border-gray-200">Active Events</button>
-
-            <button @click="tab='archived'"
-                    :class="tab==='archived' ? 'bg-red-100 text-red-600' : 'bg-white text-gray-700 border'"
-                    class="rounded-full px-4 py-1.5 text-sm font-medium border border-gray-200">Archived Events</button>
-        </div>
-
-        <!-- Status Filter -->
-        <div class="flex flex-wrap gap-2 mb-8">
-            <template x-for="st in statuses" :key="st">
-                <button @click="filterStatus=st"
-                        :class="filterStatus===st ? 'bg-red-600 text-white' : 'bg-white text-gray-700 border'"
-                        class="rounded-full border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-red-50">
-                    <span x-text="st"></span>
-                </button>
-            </template>
-        </div>
 
         <!-- Event Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -125,15 +104,12 @@
             return {
                 search: '',
                 tab: 'active',
-                filterStatus: 'All',
                 statuses: ['All','Active','Draft','Completed','Cancelled'],
 
                 matches(title, desc, status) {
                     const term = this.search.toLowerCase();
                     const textMatch = title.includes(term) || desc.includes(term);
-                    const statusMatch = this.filterStatus === 'All' ||
-                        status.toLowerCase() === this.filterStatus.toLowerCase();
-                    return textMatch && statusMatch;
+                    return textMatch;
                 }
             }
         }
