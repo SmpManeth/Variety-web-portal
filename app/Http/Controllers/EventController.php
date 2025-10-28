@@ -188,7 +188,7 @@ class EventController extends Controller
             return [
                 'id'         => $day->id,
                 'title'      => $day->title,
-                'date'       => optional($day->date)->format('Y-m-d'), // for <input type="date">
+                'date'       => $day->date ,
                 'subtitle'   => $day->subtitle,
                 'image_url'  => $day->image_path
                     ? \Illuminate\Support\Facades\Storage::disk('public')->url($day->image_path)
