@@ -6,5 +6,5 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole
 {
-    // Optionally extend for app-specific relationships later
+    protected $fillable = ['name', 'guard_name'];
 }

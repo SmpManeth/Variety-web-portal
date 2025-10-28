@@ -8,19 +8,19 @@
 
     <!-- Overlay -->
     <div x-show="open"
-         @click="open = false"
-         class="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
-         x-transition.opacity></div>
+        @click="open = false"
+        class="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+        x-transition.opacity></div>
 
     <!-- Sidebar -->
     <aside x-show="open || window.innerWidth >= 768"
-           x-transition:enter="transition transform ease-out duration-300"
-           x-transition:enter-start="-translate-x-full"
-           x-transition:enter-end="translate-x-0"
-           x-transition:leave="transition transform ease-in duration-200"
-           x-transition:leave-start="translate-x-0"
-           x-transition:leave-end="-translate-x-full"
-           class="fixed md:static top-0 left-0 h-screen w-64 flex flex-col justify-between border-r border-gray-200 bg-white p-4 z-50">
+        x-transition:enter="transition transform ease-out duration-300"
+        x-transition:enter-start="-translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition transform ease-in duration-200"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="-translate-x-full"
+        class="fixed md:static top-0 left-0 h-screen w-64 flex flex-col justify-between border-r border-gray-200 bg-white p-4 z-50">
 
         <!-- Top Section -->
         <div>
@@ -41,7 +41,7 @@
                     <ul class="space-y-1">
                         <li>
                             <a href="{{ route('dashboard') }}"
-                               class="flex items-center gap-3 rounded-lg px-3 py-2
+                                class="flex items-center gap-3 rounded-lg px-3 py-2
                                    {{ request()->routeIs('dashboard') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                                 <i class="fa-solid fa-chart-line w-5 text-center"></i>
                                 <span>Dashboard</span>
@@ -49,7 +49,7 @@
                         </li>
                         <li>
                             <a href="{{ route('events.index') }}"
-                               class="flex items-center gap-3 rounded-lg px-3 py-2
+                                class="flex items-center gap-3 rounded-lg px-3 py-2
                                    {{ request()->routeIs('events.*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                                 <i class="fa-solid fa-calendar-days w-5 text-center"></i>
                                 <span>Events</span>
@@ -62,17 +62,49 @@
                 <div>
                     <h3 class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">Management</h3>
                     <ul class="space-y-1">
-                        <li>
-                            <a href="#"
-                               class="flex items-center gap-3 rounded-lg px-3 py-2
-                                   {{ request()->routeIs('users.*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                                <i class="fa-solid fa-users w-5 text-center"></i>
-                                <span>User Management</span>
-                            </a>
+                        <!-- Access Control -->
+                        <li class="mt-6">
+                            <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Access Control
+                            </p>
+
+                            <ul class="mt-2 space-y-1">
+                                <!-- Users -->
+                                <li>
+                                    <a href="{{ route('users.index') }}"
+                                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition 
+                      hover:bg-gray-100 {{ request()->routeIs('users.*') ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700' }}">
+                                        <i class="fa-solid fa-users-gear text-gray-700"></i>
+                                        <span>User Management</span>
+                                    </a>
+                                </li>
+
+                                <!-- Roles -->
+                                <li>
+                                    <a href="{{ route('roles.index') }}"
+                                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition 
+                      hover:bg-gray-100 {{ request()->routeIs('roles.*') ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700' }}">
+                                        <i class="fa-solid fa-shield-halved text-gray-700"></i>
+                                        <span>Roles</span>
+                                    </a>
+                                </li>
+
+                                <!-- Permissions -->
+                                <li>
+                                    <a href="{{ route('permissions.index') }}"
+                                        class="flex items-center gap-3 px-3 py-2 rounded-lg transition 
+                      hover:bg-gray-100 {{ request()->routeIs('permissions.*') ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-700' }}">
+                                        <i class="fa-solid fa-key text-gray-700"></i>
+                                        <span>Permissions</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
+
+
                         <li>
                             <a href="#"
-                               class="flex items-center gap-3 rounded-lg px-3 py-2
+                                class="flex items-center gap-3 rounded-lg px-3 py-2
                                    {{ request()->routeIs('settings.*') ? 'bg-red-50 text-red-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                                 <i class="fa-solid fa-gear w-5 text-center"></i>
                                 <span>Settings</span>
