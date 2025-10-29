@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::middleware(['auth', 'role:Super Admin'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);
 });
 
