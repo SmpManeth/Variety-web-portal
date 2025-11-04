@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\Response;
 
 final class EventParticipantController extends Controller
 {
-    public function store(StoreEventParticipantRequest $request,Event $event,EventParticipantService $service): RedirectResponse {
+    public function store(StoreEventParticipantRequest $request, Event $event, EventParticipantService $service): RedirectResponse
+    {
+
         $service->create($event, $request->validated());
 
         return back()->with('success', 'Participant added successfully.');
@@ -47,7 +49,7 @@ final class EventParticipantController extends Controller
             'Last Name',
             'Email',
             'Phone',
-            'Age',
+            'Vehicle',
             'Status (active/inactive)',
             'Emergency Contact Name',
             'Emergency Contact Phone',

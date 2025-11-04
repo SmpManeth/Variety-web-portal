@@ -115,6 +115,107 @@
             </div>
         </div>
 
+        <!-- Participants Management -->
+        <section id="participants-section" x-show="showParticipants" x-transition class="mt-6 space-y-6">
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-900">
+                        <i class="fa-solid fa-user-group text-red-600"></i>
+                        Event Participants ({{ $event->participants->count() }})
+                    </h2>
+
+                    <div class="flex gap-3">
+                        <form method="POST" action="{{ route('participants.import', $event) }}"
+                            enctype="multipart/form-data" class="flex items-center gap-2">
+                            @csrf
+                            <input type="file" name="file" accept=".xlsx,.xls"
+                                id="excelImport" class="hidden"
+                                onchange="this.form.submit()">
+                            <button type="button" onclick="document.getElementById('excelImport').click()"
+                                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                                <i class="fa-solid fa-upload"></i> Import Excel
+                            </button>
+                        </form>
+
+                        <a href="{{ route('participants.template') }}"
+                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                            <i class="fa-solid fa-file-arrow-down"></i> Download Template
+                        </a>
+
+                        <button @click="openModal = true"
+                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                            <i class="fa-solid fa-user-plus"></i> Add Participant
+                        </button>
+                    </div>
+                </div>
+
+                <input type="text" placeholder="Search participants by name or email..."
+                    x-model="search"
+                    class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 mb-4" />
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border-t">
+                        <thead class="bg-gray-50">
+                            <tr class="text-left text-gray-600">
+                                <th class="px-4 py-2 font-medium">Name</th>
+                                <th class="px-4 py-2 font-medium">Vehicle</th>
+                                <th class="px-4 py-2 font-medium">Contact</th>
+                                <th class="px-4 py-2 font-medium">Emergency Contact</th>
+                                <th class="px-4 py-2 font-medium">Status</th>
+                                <th class="px-4 py-2 font-medium text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach($event->participants as $p)
+                            <tr>
+                                <td class="px-4 py-2 font-semibold text-gray-900">
+                                    {{ $p->full_name }}
+                                    <div class="text-xs text-gray-500">{{ $p->email }}</div>
+                                </td>
+                                <td class="px-4 py-2">{{ $p->vehicle ?? '—' }}</td>
+                                <td class="px-4 py-2">{{ $p->phone ?? '—' }}</td>
+                                <td class="px-4 py-2">
+                                    {{ $p->emergency_contact_name ?? '—' }}
+                                    <div class="text-xs text-gray-500">{{ $p->emergency_contact_relationship }}</div>
+                                </td>
+                                <td class="px-4 py-2">
+                                    <span class="px-2 py-0.5 text-xs rounded-full font-medium
+                                                 {{ $p->status === 'active' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }}">
+                                        {{ $p->status }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2 text-right flex justify-end gap-2">
+                                    <form method="POST" action="{{ route('participants.destroy', [$event, $p]) }}">
+                                        @csrf @method('DELETE')
+                                        <button type="submit"
+                                            class="text-red-600 hover:text-red-800"
+                                            onclick="return confirm('Delete participant?')">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @endforeach
+                            @if($event->participants->isEmpty())
+                            <tr>
+                                <td colspan="6" class="px-4 py-6 text-center text-gray-500">No participants yet.</td>
+                            </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add Modal -->
+            <div x-show="openModal" x-cloak
+                class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                <div @click.outside="openModal = false"
+                    class="bg-white rounded-xl w-full max-w-2xl p-6">
+                    @include('pages.events.participants._create-form', ['event' => $event])
+                </div>
+            </div>
+        </section>
+
         <!-- Main Layout -->
         <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Left: Itinerary List -->
@@ -173,106 +274,6 @@
                     </template>
                 </div>
 
-                <!-- Participants Management -->
-                <section id="participants-section" x-show="showParticipants" x-transition class="mt-6 space-y-6">
-                    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-900">
-                                <i class="fa-solid fa-user-group text-red-600"></i>
-                                Event Participants ({{ $event->participants->count() }})
-                            </h2>
-
-                            <div class="flex gap-3">
-                                <form method="POST" action="{{ route('participants.import', $event) }}"
-                                    enctype="multipart/form-data" class="flex items-center gap-2">
-                                    @csrf
-                                    <input type="file" name="file" accept=".xlsx,.xls"
-                                        id="excelImport" class="hidden"
-                                        onchange="this.form.submit()">
-                                    <button type="button" onclick="document.getElementById('excelImport').click()"
-                                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
-                                        <i class="fa-solid fa-upload"></i> Import Excel
-                                    </button>
-                                </form>
-
-                                <a href="{{ route('participants.template') }}"
-                                    class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
-                                    <i class="fa-solid fa-file-arrow-down"></i> Download Template
-                                </a>
-
-                                <button @click="openModal = true"
-                                    class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
-                                    <i class="fa-solid fa-user-plus"></i> Add Participant
-                                </button>
-                            </div>
-                        </div>
-
-                        <input type="text" placeholder="Search participants by name or email..."
-                            x-model="search"
-                            class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 mb-4" />
-
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full text-sm border-t">
-                                <thead class="bg-gray-50">
-                                    <tr class="text-left text-gray-600">
-                                        <th class="px-4 py-2 font-medium">Name</th>
-                                        <th class="px-4 py-2 font-medium">Age</th>
-                                        <th class="px-4 py-2 font-medium">Contact</th>
-                                        <th class="px-4 py-2 font-medium">Emergency Contact</th>
-                                        <th class="px-4 py-2 font-medium">Status</th>
-                                        <th class="px-4 py-2 font-medium text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    @foreach($event->participants as $p)
-                                    <tr>
-                                        <td class="px-4 py-2 font-semibold text-gray-900">
-                                            {{ $p->full_name }}
-                                            <div class="text-xs text-gray-500">{{ $p->email }}</div>
-                                        </td>
-                                        <td class="px-4 py-2">{{ $p->age ?? '—' }}</td>
-                                        <td class="px-4 py-2">{{ $p->phone ?? '—' }}</td>
-                                        <td class="px-4 py-2">
-                                            {{ $p->emergency_contact_name ?? '—' }}
-                                            <div class="text-xs text-gray-500">{{ $p->emergency_contact_relationship }}</div>
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            <span class="px-2 py-0.5 text-xs rounded-full font-medium
-                                                 {{ $p->status === 'active' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }}">
-                                                {{ $p->status }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-2 text-right flex justify-end gap-2">
-                                            <form method="POST" action="{{ route('participants.destroy', [$event, $p]) }}">
-                                                @csrf @method('DELETE')
-                                                <button type="submit"
-                                                    class="text-red-600 hover:text-red-800"
-                                                    onclick="return confirm('Delete participant?')">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                    @if($event->participants->isEmpty())
-                                    <tr>
-                                        <td colspan="6" class="px-4 py-6 text-center text-gray-500">No participants yet.</td>
-                                    </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Add Modal -->
-                    <div x-show="openModal" x-cloak
-                        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                        <div @click.outside="openModal = false"
-                            class="bg-white rounded-xl w-full max-w-2xl p-6">
-                            @include('pages.events.participants._create-form', ['event' => $event])
-                        </div>
-                    </div>
-                </section>
 
                 <!-- Key Locations -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">

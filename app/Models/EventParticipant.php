@@ -18,7 +18,7 @@ final class EventParticipant extends Model
         'last_name',
         'email',
         'phone',
-        'age',
+        'vehicle',
         'status',
         'emergency_contact_name',
         'emergency_contact_phone',

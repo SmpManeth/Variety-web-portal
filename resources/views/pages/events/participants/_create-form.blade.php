@@ -29,8 +29,8 @@
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-gray-700">Age</label>
-            <input type="number" name="age" min="1"
+            <label class="block text-sm font-medium text-gray-700">Vehicle</label>
+            <input type="text" name="vehicle" min="1"
                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
         </div>
 
