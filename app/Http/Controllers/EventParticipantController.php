@@ -75,4 +75,20 @@ final class EventParticipantController extends Controller
 
         return response()->download($tempFile, 'participants_template.xlsx')->deleteFileAfterSend(true);
     }
+
+    public function update(Request $request, Event $event, EventParticipant $participant)
+    {
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'vehicle' => 'nullable|string|max:255',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_relationship' => 'nullable|string|max:255',
+        ]);
+
+        $participant->update($validated);
+
+        return back()->with('success', 'Participant updated successfully.');
+    }
 }

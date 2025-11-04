@@ -1,32 +1,44 @@
 <x-app-layout>
     <div class="max-w-7xl mx-auto p-6"
         x-data="{
-         days: {{ $daysJson }},
-         selected: 0,
-         showParticipants: false,
-         openModal: false,
-         get current() { return this.days[this.selected] || {}; },
-         select(idx) {
-             this.selected = idx;
-             if (window.innerWidth < 1024) {
-                 setTimeout(() => {
-                     document.querySelector('section.lg\\:col-span-8')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                 }, 0);
-             }
-         },
-         toggleParticipants() {
-             this.showParticipants = !this.showParticipants;
-             if (this.showParticipants) {
-                 // Wait for render, then scroll
-                 this.$nextTick(() => {
-                     document.getElementById('participants-section')?.scrollIntoView({
-                         behavior: 'smooth',
-                         block: 'start'
-                     });
-                 });
-             }
-         }
-     }">
+            days: {{ $daysJson }},
+            selected: 0,
+            showParticipants: localStorage.getItem('showParticipants') === 'true',
+            openModal: false,
+            modalType: null,
+            modalData: {},
+            get current() { return this.days[this.selected] || {}; },
+            select(idx) {
+                this.selected = idx;
+                if (window.innerWidth < 1024) {
+                    setTimeout(() => {
+                        document.querySelector('section.lg\\:col-span-8')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 0);
+                }
+            },
+            toggleParticipants() {
+                this.showParticipants = !this.showParticipants;
+                localStorage.setItem('showParticipants', this.showParticipants);
+                if (this.showParticipants) {
+                    this.$nextTick(() => {
+                        document.getElementById('participants-section')?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    });
+                }
+            },
+            openAddModal() {
+                this.modalType = 'create';
+                this.modalData = {};
+                this.openModal = true;
+            },
+            openEditModal(p) {
+                this.modalType = 'edit';
+                this.modalData = { ...p };
+                this.openModal = true;
+            }
+        }">
 
         <!-- Top: Back + Title + Actions -->
         <div class="flex items-center justify-between">
@@ -43,7 +55,6 @@
                     <i class="fa-solid fa-users"></i>
                     <span x-text="showParticipants ? 'Hide Participants' : 'Manage Participants'"></span>
                 </a>
-
 
                 <a href="{{ route('events.edit', $event) }}"
                     class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
@@ -101,7 +112,7 @@
                         <div>
                             <p class="text-xs uppercase tracking-wide text-gray-500 font-semibold">Participants</p>
                             <p class="text-sm text-gray-800">
-                                2 / {{ $event->max_participants }}
+                                {{ $event->participants->count() }} / {{ $event->max_participants }}
                             </p>
                         </div>
                     </div>
@@ -125,33 +136,23 @@
                     </h2>
 
                     <div class="flex gap-3">
-                        <form method="POST" action="{{ route('participants.import', $event) }}"
-                            enctype="multipart/form-data" class="flex items-center gap-2">
+                        <form method="POST" action="{{ route('participants.import', $event) }}" enctype="multipart/form-data" class="flex items-center gap-2">
                             @csrf
-                            <input type="file" name="file" accept=".xlsx,.xls"
-                                id="excelImport" class="hidden"
-                                onchange="this.form.submit()">
-                            <button type="button" onclick="document.getElementById('excelImport').click()"
-                                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                            <input type="file" name="file" accept=".xlsx,.xls" id="excelImport" class="hidden" onchange="this.form.submit()">
+                            <button type="button" onclick="document.getElementById('excelImport').click()" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
                                 <i class="fa-solid fa-upload"></i> Import Excel
                             </button>
                         </form>
 
-                        <a href="{{ route('participants.template') }}"
-                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                        <a href="{{ route('participants.template') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
                             <i class="fa-solid fa-file-arrow-down"></i> Download Template
                         </a>
 
-                        <button @click="openModal = true"
-                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                        <button @click="openAddModal()" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
                             <i class="fa-solid fa-user-plus"></i> Add Participant
                         </button>
                     </div>
                 </div>
-
-                <input type="text" placeholder="Search participants by name or email..."
-                    x-model="search"
-                    class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500 mb-4" />
 
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm border-t">
@@ -166,52 +167,68 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @foreach($event->participants as $p)
-                            <tr>
-                                <td class="px-4 py-2 font-semibold text-gray-900">
-                                    {{ $p->full_name }}
-                                    <div class="text-xs text-gray-500">{{ $p->email }}</div>
-                                </td>
-                                <td class="px-4 py-2">{{ $p->vehicle ?? '—' }}</td>
-                                <td class="px-4 py-2">{{ $p->phone ?? '—' }}</td>
-                                <td class="px-4 py-2">
-                                    {{ $p->emergency_contact_name ?? '—' }}
-                                    <div class="text-xs text-gray-500">{{ $p->emergency_contact_relationship }}</div>
-                                </td>
-                                <td class="px-4 py-2">
-                                    <span class="px-2 py-0.5 text-xs rounded-full font-medium
-                                                 {{ $p->status === 'active' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }}">
-                                        {{ $p->status }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-2 text-right flex justify-end gap-2">
-                                    <form method="POST" action="{{ route('participants.destroy', [$event, $p]) }}">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                            class="text-red-600 hover:text-red-800"
-                                            onclick="return confirm('Delete participant?')">
-                                            <i class="fa-solid fa-trash"></i>
+                            @forelse($event->participants as $p)
+                                <tr>
+                                    <td class="px-4 py-2 font-semibold text-gray-900">
+                                        {{ $p->full_name }}
+                                        <div class="text-xs text-gray-500">{{ $p->email }}</div>
+                                    </td>
+                                    <td class="px-4 py-2">{{ $p->vehicle ?? '—' }}</td>
+                                    <td class="px-4 py-2">{{ $p->phone ?? '—' }}</td>
+                                    <td class="px-4 py-2">
+                                        {{ $p->emergency_contact_name ?? '—' }}
+                                        <div class="text-xs text-gray-500">{{ $p->emergency_contact_relationship }}</div>
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <span class="px-2 py-0.5 text-xs rounded-full font-medium
+                                            {{ $p->status === 'active' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }}">
+                                            {{ $p->status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-2 text-right flex justify-end gap-2">
+                                        <button type="button"
+                                            @click="openEditModal({ 
+                                                id: {{ $p->id }},
+                                                full_name: '{{ $p->full_name }}',
+                                                email: '{{ $p->email }}',
+                                                phone: '{{ $p->phone }}',
+                                                vehicle: '{{ $p->vehicle }}',
+                                                emergency_contact_name: '{{ $p->emergency_contact_name }}',
+                                                emergency_contact_relationship: '{{ $p->emergency_contact_relationship }}',
+                                                status: '{{ $p->status }}'
+                                            })"
+                                            class="text-gray-600 hover:text-gray-800">
+                                            <i class="fa-solid fa-pen"></i>
                                         </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            @endforeach
-                            @if($event->participants->isEmpty())
-                            <tr>
-                                <td colspan="6" class="px-4 py-6 text-center text-gray-500">No participants yet.</td>
-                            </tr>
-                            @endif
+
+                                        <form method="POST" action="{{ route('participants.destroy', [$event, $p]) }}">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Delete participant?')">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-4 py-6 text-center text-gray-500">No participants yet.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Add Modal -->
-            <div x-show="openModal" x-cloak
-                class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                <div @click.outside="openModal = false"
-                    class="bg-white rounded-xl w-full max-w-2xl p-6">
-                    @include('pages.events.participants._create-form', ['event' => $event])
+            <!-- Add/Edit Modal -->
+            <div x-show="openModal" x-cloak class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                <div @click.outside="openModal = false" class="bg-white rounded-xl w-full max-w-2xl p-6">
+                    <template x-if="modalType === 'create'">
+                        @include('pages.events.participants._create-form', ['event' => $event])
+                    </template>
+
+                    <template x-if="modalType === 'edit'">
+                    @include('pages.events.participants._edit-form', ['event' => $event])
+                    </template>
                 </div>
             </div>
         </section>

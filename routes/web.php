@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     // Event Participants 
     Route::prefix('events/{event}')->group(function () {
         Route::post('participants', [EventParticipantController::class, 'store'])->name('participants.store');
+        Route::put('participants/{participant}', [EventParticipantController::class, 'update'])->name('participants.update');
         Route::delete('participants/{participant}', [EventParticipantController::class, 'destroy'])->name('participants.destroy');
         Route::post('participants/import', [EventParticipantController::class, 'import'])->name('participants.import');//todo
     });
