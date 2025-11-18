@@ -362,21 +362,12 @@
             <h4 class="text-sm font-semibold text-gray-900">Event Sponsors</h4>
             <p class="text-xs text-gray-500 mb-4">Thank you to our generous sponsors who make this event possible.</p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                @forelse ($event->sponsors as $s)
-                <div class="rounded-xl border border-gray-200 bg-white p-4 text-center">
-                    <div class="mx-auto h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                        @if($s->logo_url)
-                        <img src="{{ $s->logo_url }}" alt="{{ $s->name }}" class="h-10 object-contain">
-                        @else
-                        <i class="fa-regular fa-image text-gray-400"></i>
-                        @endif
-                    </div>
-                    <p class="mt-3 text-xs font-semibold text-gray-800">{{ $s->name }}</p>
-                </div>
-                @empty
+            <div>
+                @if ($event->sponsor_image_path)
+                    <img src="/storage/{{ $event->sponsor_image_path }}" class="w-full md:w-1/3 rounded-lg">
+                @else
                 <p class="text-sm text-gray-500">No sponsors added.</p>
-                @endforelse
+                @endif
             </div>
         </section>
     </div>
