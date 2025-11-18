@@ -44,7 +44,6 @@ class EventController extends Controller
                 'description'      => $data['description'],
                 'start_date'       => $data['start_date'],
                 'end_date'         => $data['end_date'],
-                'max_participants' => $data['max_participants'],
             ]);
 
             // Days
@@ -246,7 +245,6 @@ class EventController extends Controller
                 'description'      => $data['description'],
                 'start_date'       => $data['start_date'],
                 'end_date'         => $data['end_date'],
-                'max_participants' => $data['max_participants'],
             ]);
 
             // Track IDs to keep (for diff-delete)

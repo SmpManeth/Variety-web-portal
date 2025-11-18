@@ -112,7 +112,7 @@
                         <div>
                             <p class="text-xs uppercase tracking-wide text-gray-500 font-semibold">Participants</p>
                             <p class="text-sm text-gray-800">
-                                {{ $event->participants->count() }} / {{ $event->max_participants }}
+                                {{ $event->participants->count() }}
                             </p>
                         </div>
                     </div>

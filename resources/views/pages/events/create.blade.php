@@ -83,7 +83,7 @@
                     </div>
 
                     <!-- Dates + Participants -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Start Date *</label>
                             <input 
@@ -107,20 +107,6 @@
                                 class="mt-1 w-full rounded-lg border {{ $errors->has('end_date') ? 'border-red-500' : 'border-gray-300' }} focus:border-red-500 focus:ring-red-500"
                             />
                             @error('end_date') 
-                                <p class="text-sm text-red-600 mt-1">{{ $message }}</p> 
-                            @enderror
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Max Participants *</label>
-                            <input 
-                                name="max_participants" 
-                                type="number" 
-                                min="0" 
-                                value="{{ old('max_participants', 50) }}" 
-                                required
-                                class="mt-1 w-full rounded-lg border {{ $errors->has('max_participants') ? 'border-red-500' : 'border-gray-300' }} focus:border-red-500 focus:ring-red-500"
-                            />
-                            @error('max_participants') 
                                 <p class="text-sm text-red-600 mt-1">{{ $message }}</p> 
                             @enderror
                         </div>
