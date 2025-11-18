@@ -57,7 +57,7 @@
                         </li>
                         <li class="flex items-center gap-2">
                             <i class="fa-solid fa-users text-red-500"></i>
-                            <span>{{ rand(0, $event->max_participants) }}/{{ $event->max_participants }} participants</span>
+                            <span>{{ $event->participants->count() }} participants</span>
                         </li>
                     </ul>
 

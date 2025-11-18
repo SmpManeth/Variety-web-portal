@@ -22,8 +22,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        $events = Event::with('sponsors')
-            ->latest()
+        $events = Event::latest()
             ->get();
 
         return view('pages.events.index', compact('events'));
@@ -40,10 +39,14 @@ class EventController extends Controller
 
         DB::transaction(function () use ($data, $request) {
             $event = Event::create([
-                'title'            => $data['title'],
-                'description'      => $data['description'],
-                'start_date'       => $data['start_date'],
-                'end_date'         => $data['end_date'],
+                'title'              => $data['title'],
+                'description'        => $data['description'],
+                'start_date'         => $data['start_date'],
+                'end_date'           => $data['end_date'],
+                'sponsor_image_path' => $request->hasFile("sponsor_image")
+                                        ? $request->file("sponsor_image")
+                                            ->store('events/sponsors', 'public')
+                                        : null
             ]);
 
             // Days
@@ -106,12 +109,7 @@ class EventController extends Controller
             // Sponsors
             foreach (($data['sponsors'] ?? []) as $s => $sponsor) {
                 if (!empty($sponsor['name'])) {
-                    EventSponsor::create([
-                        'event_id'  => $event->id,
-                        'name'      => $sponsor['name'],
-                        'logo_url'  => $sponsor['logo_url'] ?? null,
-                        'sort_order' => $s,
-                    ]);
+                    // TODO save sponsor details
                 }
             }
         });
@@ -130,8 +128,7 @@ class EventController extends Controller
         $event->load([
             'days.locations',
             'days.details',
-            'days.resources',
-            'sponsors',
+            'days.resources'
         ]);
 
         // Calculate duration
@@ -179,7 +176,6 @@ class EventController extends Controller
             'days.locations',
             'days.details',
             'days.resources',
-            'sponsors',
         ]);
 
         // Pre-format days for Alpine (include IDs + existing image URL)
