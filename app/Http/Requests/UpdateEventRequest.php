@@ -19,7 +19,6 @@ class UpdateEventRequest extends FormRequest
             'description'      => ['required', 'string'],
             'start_date'       => ['required', 'date'],
             'end_date'         => ['required', 'date', 'after_or_equal:start_date'],
-            'max_participants' => ['required', 'integer', 'min:0'],
 
             // Days (existing/new)
             'days'                       => ['array'],
@@ -54,11 +53,7 @@ class UpdateEventRequest extends FormRequest
             'days.*.resources.*.sort_order'      => ['nullable', 'integer', 'min:0'],
 
             // Sponsors
-            'sponsors'                 => ['array'],
-            'sponsors.*.id'            => ['nullable', 'integer'],
-            'sponsors.*.name'          => ['required', 'string', 'max:255'],
-            'sponsors.*.logo_url'      => ['nullable', 'url'],
-            'sponsors.*.sort_order'    => ['nullable', 'integer', 'min:0'],
+            'sponsor_image' => ['nullable', 'image', 'max:4096'],
         ];
     }
 }

@@ -28,7 +28,6 @@
 
         <form x-data="editForm({
                     initDays: @js($daysJson),
-                    initSponsors: @js($sponsorsJson),
                     old: @js(old())
                })"
               x-init="init()"
@@ -242,34 +241,47 @@
             <!-- Sponsors -->
             <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Event Sponsors</h2>
-
-                <div class="rounded-xl border border-gray-100 bg-red-50/40 p-4">
-                    <div class="flex items-center justify-between">
-                        <span class="font-medium text-gray-900">Add New Sponsor</span>
-                        <button type="button" @click="addSponsor()"
-                                class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">
-                            <i class="fa-solid fa-plus"></i> Add
-                        </button>
-                    </div>
-
-                    <div class="mt-4 space-y-3">
-                        <template x-for="(sp, s) in sponsors" :key="s">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <template x-if="sp.id">
-                                    <input type="hidden" :name="`sponsors[${s}][id]`" x-model="sp.id">
-                                </template>
-                                <input :name="`sponsors[${s}][name]`" x-model="sp.name" placeholder="Sponsor name"
-                                       class="rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500"/>
-                                <div class="flex md:col-span-2 gap-2">
-                                    <input :name="`sponsors[${s}][logo_url]`" x-model="sp.logo_url" placeholder="Logo URL"
-                                           class="w-full rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500"/>
-                                    <input type="hidden" :name="`sponsors[${s}][sort_order]`" :value="s">
-                                    <button type="button" @click="removeSponsor(s)"
-                                            class="rounded-lg border border-gray-200 px-3 text-sm hover:bg-gray-50">Remove</button>
-                                </div>
+                <div class="w-1/3 justify-center" x-data="{
+                    sponsorImageFile: null,
+                    defaultPreview: '{{$event->sponsor_image_path ? '/storage/' . $event->sponsor_image_path : null}}',
+                }">
+                    <label for="sponsor_image">
+                        {{-- Preview Section --}}
+                        <div class="cursor-pointer bg-gray-100 rounded-lg aspect-square relative">
+                            <button
+                                x-show="sponsorImageFile"
+                                type="button"
+                                class="w-8 h-8 bg-red-600 rounded-full text-white absolute -right-2 -top-2"
+                                @click="$refs.sponsorImageInput.value = ''; sponsorImageFile = null"
+                            >X</button>
+                            <img
+                                class="object-contain w-full h-full rounded-lg"
+                                x-bind:src="sponsorImageFile ? URL.createObjectURL(sponsorImageFile) : defaultPreview"
+                                x-show="sponsorImageFile ?? defaultPreview"
+                            />
+                            <div x-show="!sponsorImageFile && !defaultPreview" class="w-full h-full flex flex-col items-center justify-center">
+                                <img src="/images/icons/icons8-image-64.png" alt="">
+                                <p class="mt-6">Drag and drop or <span class="font-bold">browse</span> files</p>
+                                <p class="text-gray-500 text-sm">PNG, JPEG or JPG</p>
                             </div>
-                        </template>
-                    </div>
+                        </div>
+
+                        {{-- Button --}}
+                        <div type="button" class="mt-2 text-center cursor-pointer rounded-lg bg-white border border-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-50">
+                            Upload Image
+                        </div>
+                    </label>
+
+                    {{-- Sponsor Image Input --}}
+                    <input
+                        type="file"
+                        x-ref="sponsorImageInput"
+                        name="sponsor_image"
+                        id="sponsor_image"
+                        class="hidden"
+                        accept="image/*" 
+                        @change="sponsorImageFile = $event.target.files[0];"
+                    />
                 </div>
             </section>
 
@@ -299,12 +311,6 @@
                     } else {
                         this.days = Array.isArray(initDays) ? initDays : JSON.parse(initDays || '[]');
                     }
-
-                    if (old && old.sponsors) {
-                        this.sponsors = old.sponsors;
-                    } else {
-                        this.sponsors = Array.isArray(initSponsors) ? initSponsors : JSON.parse(initSponsors || '[]');
-                    }
                 },
 
                 // Days
@@ -330,10 +336,6 @@
                 // Resources
                 addResource(i) { this.days[i].resources.push({ id: null, title: '', url: '' }); },
                 removeResource(i, r) { this.days[i].resources.splice(r, 1); },
-
-                // Sponsors
-                addSponsor() { this.sponsors.push({ id: null, name: '', logo_url: '' }); },
-                removeSponsor(s) { this.sponsors.splice(s, 1); },
             }
         }
     </script>

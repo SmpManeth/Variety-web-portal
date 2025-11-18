@@ -38,15 +38,16 @@ class EventController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($data, $request) {
+            $sponsor_image_path = $request->hasFile("sponsor_image")
+                ? $request->file("sponsor_image")->store('events/sponsors', 'public')
+                : null;
+
             $event = Event::create([
                 'title'              => $data['title'],
                 'description'        => $data['description'],
                 'start_date'         => $data['start_date'],
                 'end_date'           => $data['end_date'],
-                'sponsor_image_path' => $request->hasFile("sponsor_image")
-                                        ? $request->file("sponsor_image")
-                                            ->store('events/sponsors', 'public')
-                                        : null
+                'sponsor_image_path' => $sponsor_image_path
             ]);
 
             // Days
@@ -103,13 +104,6 @@ class EventController extends Controller
                             'sort_order'   => $r,
                         ]);
                     }
-                }
-            }
-
-            // Sponsors
-            foreach (($data['sponsors'] ?? []) as $s => $sponsor) {
-                if (!empty($sponsor['name'])) {
-                    // TODO save sponsor details
                 }
             }
         });
@@ -215,17 +209,9 @@ class EventController extends Controller
             ];
         })->values();
 
-        $sponsors = $event->sponsors->map(fn($s) => [
-            'id'         => $s->id,
-            'name'       => $s->name,
-            'logo_url'   => $s->logo_url,
-            'sort_order' => $s->sort_order ?? 0,
-        ])->values();
-
         return view('pages.events.edit', [
             'event'        => $event,
             'daysJson'     => $days->toJson(),
-            'sponsorsJson' => $sponsors->toJson(),
         ]);
     }
 
@@ -235,12 +221,18 @@ class EventController extends Controller
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request, $event) {
 
+            if($request->hasFile("sponsor_image")){
+                $sponsor_image_path = $request->file("sponsor_image")->store('events/sponsors', 'public');
+                Storage::disk('public')->delete($event->sponsor_image_path);
+            }
+
             // 1) Update Event main fields
             $event->update([
-                'title'            => $data['title'],
-                'description'      => $data['description'],
-                'start_date'       => $data['start_date'],
-                'end_date'         => $data['end_date'],
+                'title'              => $data['title'],
+                'description'        => $data['description'],
+                'start_date'         => $data['start_date'],
+                'end_date'           => $data['end_date'],
+                'sponsor_image_path' => $sponsor_image_path ?? $event->sponsor_image_path ?? null
             ]);
 
             // Track IDs to keep (for diff-delete)
@@ -367,30 +359,6 @@ class EventController extends Controller
 
                     $keepResourceIds[] = $resource->id;
                 }
-            }
-
-            // 3) Upsert Sponsors
-            foreach (($data['sponsors'] ?? []) as $s => $sp) {
-                if (empty($sp['name']) && empty($sp['logo_url'])) {
-                    continue;
-                }
-
-                $spAttrs = [
-                    'event_id'   => $event->id,
-                    'name'       => $sp['name'] ?? '',
-                    'logo_url'   => $sp['logo_url'] ?? null,
-                    'sort_order' => $sp['sort_order'] ?? $s,
-                ];
-
-                if (!empty($sp['id'])) {
-                    $sponsor = \App\Models\EventSponsor::where('event_id', $event->id)
-                        ->where('id', $sp['id'])->firstOrFail();
-                    $sponsor->update($spAttrs);
-                } else {
-                    $sponsor = \App\Models\EventSponsor::create($spAttrs);
-                }
-
-                $keepSponsorIds[] = $sponsor->id;
             }
 
             // 4) Diff-delete removed items

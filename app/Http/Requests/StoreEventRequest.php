@@ -39,7 +39,7 @@ class StoreEventRequest extends FormRequest
             'days.*.resources.*.title'        => ['required_with:days.*.resources.*.url', 'string', 'max:255'],
             'days.*.resources.*.url'          => ['nullable'],
 
-            'sponsor_image' => ['nullable', 'image'],
+            'sponsor_image' => ['nullable', 'image', 'max:4096'],
         ];
     }
 }
