@@ -67,6 +67,8 @@ class EventController extends Controller
                     'subtitle'   => $dayData['subtitle'] ?? null,
                     'image_path' => $imagePath,
                     'sort_order' => $i,
+                    'itinerary_title' => $dayData['itinerary_title'] ?? '',
+                    'itinerary_description' => $dayData['itinerary_description'] ?? '',
                 ]);
 
                 // Locations
@@ -78,18 +80,6 @@ class EventController extends Controller
                             'link_title'   => $loc['link_title'] ?? null,
                             'link_url'     => $loc['link_url'] ?? null,
                             'sort_order'   => $j,
-                        ]);
-                    }
-                }
-
-                // Details
-                foreach (($dayData['details'] ?? []) as $k => $det) {
-                    if (!empty($det['title']) || !empty($det['description'])) {
-                        EventDayDetail::create([
-                            'event_day_id' => $day->id,
-                            'title'        => $det['title'] ?? '',
-                            'description'  => $det['description'] ?? null,
-                            'sort_order'   => $k,
                         ]);
                     }
                 }
@@ -121,7 +111,6 @@ class EventController extends Controller
         // Load all relationships in correct order
         $event->load([
             'days.locations',
-            'days.details',
             'days.resources'
         ]);
 
@@ -137,6 +126,9 @@ class EventController extends Controller
                 'date'      => optional($day->date)->format('l d F Y'),
                 'date_short' => optional($day->date)->format('d/m/Y'),
                 'subtitle'  => $day->subtitle,
+                'itinerary_title'  => $day->itinerary_title,
+                'itinerary_description'  => $day->itinerary_description->render(),
+                'subtitle'  => $day->subtitle,
                 'image'     => $day->image_path
                     ? \Illuminate\Support\Facades\Storage::disk('public')->url($day->image_path)
                     : null,
@@ -144,10 +136,6 @@ class EventController extends Controller
                     'name'       => $l->name,
                     'link_title' => $l->link_title,
                     'link_url'   => $l->link_url,
-                ])->values(),
-                'details'   => $day->details->map(fn($v) => [
-                    'title'       => $v->title,
-                    'description' => $v->description,
                 ])->values(),
                 'resources' => $day->resources->map(fn($r) => [
                     'title' => $r->title,

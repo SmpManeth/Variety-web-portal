@@ -11,7 +11,7 @@ class EventDay extends Model {
     use HasFactory, HasRichText;
 
     protected $fillable = [
-        'event_id','title','date','subtitle','image_path','sort_order', 'itinerary_title'
+        'event_id','title','date','subtitle','image_path','sort_order', 'itinerary_title', 'itinerary_description'
     ];
 
     protected $richTextAttributes = [
