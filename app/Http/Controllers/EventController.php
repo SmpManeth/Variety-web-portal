@@ -156,7 +156,6 @@ class EventController extends Controller
     {
         $event->load([
             'days.locations',
-            'days.details',
             'days.resources',
         ]);
 
@@ -172,6 +171,8 @@ class EventController extends Controller
                     : null,
                 'remove_image' => false,
                 'sort_order' => $day->sort_order ?? 0,
+                'itinerary_title' => $day->itinerary_title,
+                'itinerary_description' => $day->itinerary_description->render(),
 
                 'locations'  => $day->locations->map(fn($l) => [
                     'id'         => $l->id,

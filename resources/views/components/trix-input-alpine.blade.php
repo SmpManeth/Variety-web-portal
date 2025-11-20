@@ -8,7 +8,6 @@
             this.id = el.dataset.id || 'trix-' + Math.random().toString(36).substr(2, 9);
             this.name = el.dataset.name || '';
             this.value = el.dataset.value || '';
-            console.log(this.id, this.name, this.value);
         }
     }"
     x-init="init()"
@@ -22,7 +21,6 @@
 
     <trix-editor
         :id="id"
-        :toolbar="id + '_toolbar'"
         :input="id + '_input'"
         {{ $attributes->merge(['class' => 'bg-white trix-content border-gray-300 focus:ring-1 focus:border-red-500 focus:ring-red-500 rounded-md shadow-sm']) }}
     ></trix-editor>

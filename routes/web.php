@@ -50,7 +50,7 @@ Route::middleware('auth')->group(function () {
             'attachment' => ['required', 'file'],
         ]);
 
-        $path = $request->file('attachment')->store('trix-attachments', 'public');
+        $path = $request->file('attachment')->store('attachments', 'public');
 
         return [
             'image_url' => '/storage/' . $path,
