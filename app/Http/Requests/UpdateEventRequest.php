@@ -39,11 +39,8 @@ class UpdateEventRequest extends FormRequest
             'days.*.locations.*.sort_order'      => ['nullable', 'integer', 'min:0'],
 
             // Details
-            'days.*.details'                     => ['array'],
-            'days.*.details.*.id'                => ['nullable', 'integer'],
-            'days.*.details.*.title'             => ['required_with:days.*.details.*.description', 'string', 'max:255'],
-            'days.*.details.*.description'       => ['nullable', 'string'],
-            'days.*.details.*.sort_order'        => ['nullable', 'integer', 'min:0'],
+            'days.*.itinerary_title'          => ['required_with:days.*.itinerary_description', 'string', 'max:255'],
+            'days.*.itinerary_description'    => ['nullable', 'string'],
 
             // Resources
             'days.*.resources'                   => ['array'],

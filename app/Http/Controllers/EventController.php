@@ -227,9 +227,7 @@ class EventController extends Controller
             // Track IDs to keep (for diff-delete)
             $keepDayIds        = [];
             $keepLocationIds   = [];
-            $keepDetailIds     = [];
             $keepResourceIds   = [];
-            $keepSponsorIds    = [];
 
             // 2) Upsert Days + nested children
             foreach (($data['days'] ?? []) as $i => $dayData) {
@@ -239,6 +237,8 @@ class EventController extends Controller
                     'date'       => $dayData['date'] ?? null,
                     'subtitle'   => $dayData['subtitle'] ?? null,
                     'sort_order' => $dayData['sort_order'] ?? $i,
+                    'itinerary_title' => $dayData['itinerary_title'] ?? '',
+                    'itinerary_description' => $dayData['itinerary_description'] ?? '',
                 ];
 
                 if (!empty($dayData['id'])) {
@@ -301,30 +301,6 @@ class EventController extends Controller
                     $keepLocationIds[] = $location->id;
                 }
 
-                // Details
-                foreach (($dayData['details'] ?? []) as $k => $det) {
-                    if (empty($det['title']) && empty($det['description'])) {
-                        continue;
-                    }
-
-                    $detAttrs = [
-                        'event_day_id' => $day->id,
-                        'title'        => $det['title'] ?? '',
-                        'description'  => $det['description'] ?? null,
-                        'sort_order'   => $det['sort_order'] ?? $k,
-                    ];
-
-                    if (!empty($det['id'])) {
-                        $detail = \App\Models\EventDayDetail::where('event_day_id', $day->id)
-                            ->where('id', $det['id'])->firstOrFail();
-                        $detail->update($detAttrs);
-                    } else {
-                        $detail = \App\Models\EventDayDetail::create($detAttrs);
-                    }
-
-                    $keepDetailIds[] = $detail->id;
-                }
-
                 // Resources
                 foreach (($dayData['resources'] ?? []) as $r => $res) {
                     if (empty($res['title']) && empty($res['url'])) {
@@ -370,14 +346,9 @@ class EventController extends Controller
             if (!empty($keepDayIds)) {
                 \App\Models\EventDayLocation::whereIn('event_day_id', $keepDayIds)
                     ->whereNotIn('id', $keepLocationIds ?: [0])->delete();
-                \App\Models\EventDayDetail::whereIn('event_day_id', $keepDayIds)
-                    ->whereNotIn('id', $keepDetailIds ?: [0])->delete();
                 \App\Models\EventDayResource::whereIn('event_day_id', $keepDayIds)
                     ->whereNotIn('id', $keepResourceIds ?: [0])->delete();
             }
-
-            \App\Models\EventSponsor::where('event_id', $event->id)
-                ->whereNotIn('id', $keepSponsorIds ?: [0])->delete();
         });
 
         return redirect()
