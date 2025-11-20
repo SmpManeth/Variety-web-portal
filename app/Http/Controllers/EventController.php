@@ -6,10 +6,8 @@ use App\Http\Requests\UpdateEventRequest;
 use App\Http\Requests\StoreEventRequest;
 use App\Models\Event;
 use App\Models\EventDay;
-use App\Models\EventDayDetail;
 use App\Models\EventDayLocation;
 use App\Models\EventDayResource;
-use App\Models\EventSponsor;
 use App\Services\EventDeletionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -182,13 +180,6 @@ class EventController extends Controller
                     'sort_order' => $l->sort_order ?? 0,
                 ])->values(),
 
-                'details'    => $day->details->map(fn($d) => [
-                    'id'          => $d->id,
-                    'title'       => $d->title,
-                    'description' => $d->description,
-                    'sort_order'  => $d->sort_order ?? 0,
-                ])->values(),
-
                 'resources'  => $day->resources->map(fn($r) => [
                     'id'         => $r->id,
                     'title'      => $r->title,
@@ -355,7 +346,6 @@ class EventController extends Controller
             ->route('events.show', $event)
             ->with('success', 'Event updated successfully.');
     }
-
 
     /**
      * Remove the specified resource from storage.

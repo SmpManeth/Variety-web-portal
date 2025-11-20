@@ -26,10 +26,6 @@ class EventDay extends Model {
         return $this->hasMany(EventDayLocation::class)->orderBy('sort_order');
     }
 
-    public function details() {
-        return $this->hasMany(EventDayDetail::class)->orderBy('sort_order');
-    }
-
     public function resources() {
         return $this->hasMany(EventDayResource::class)->orderBy('sort_order');
     }
