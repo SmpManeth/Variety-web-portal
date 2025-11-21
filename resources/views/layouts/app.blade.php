@@ -16,10 +16,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-rich-text::styles theme="richtextlaravel" data-turbo-track="false" />
 </head>
 
 <body class="font-sans antialiased">
-<div class="flex min-h-screen">
+    <div class="flex min-h-screen">
         <!-- Sidebar -->
         @include('layouts.sidebar')
 
@@ -28,6 +29,38 @@
             {{ $slot ?? '' }}
         </main>
     </div>
+
+    <script>
+        // Listen for the trix-attachment-add event (it bubbles)
+        document.addEventListener("trix-attachment-add", function(event) {
+            console.log(event);
+            return upload(event);
+        });
+
+        function upload (event) {
+            if (! event?.attachment?.file) return
+
+            const form = new FormData()
+            form.append('attachment', event.attachment.file)
+
+            const options = {
+                method: 'POST',
+                body: form,
+                headers: {
+                    'X-CSRF-TOKEN': document.head.querySelector('meta[name=csrf-token]').content,
+                }
+            }
+
+            fetch('/attachments', options)
+                .then(resp => resp.json())
+                .then((data) => {
+                    event.attachment.setAttributes({
+                        url: data.image_url,
+                        href: data.image_url,
+                    })
+                })
+        }
+    </script>
 </body>
 
 </html>
