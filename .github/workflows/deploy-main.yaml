@@ -47,7 +47,6 @@ jobs:
         server: ${{ vars.live_ftp_server }}
         username: ${{ vars.live_ftp_user }}
         password: ${{ vars.live_ftp_password }}
-        server-dir: ./${{ vars.live_ftp_sever_dir }}/
 
     - name: Check website status
       run: curl -I http://${{ vars.live_url }}/
