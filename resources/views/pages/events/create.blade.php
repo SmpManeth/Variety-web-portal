@@ -200,25 +200,23 @@
                             <div class="mt-6 rounded-xl border border-gray-100 bg-red-50/40 p-4">
                                 <div class="flex items-center justify-between">
                                     <h4 class="font-semibold text-gray-900">Itinerary Details</h4>
-                                    <button type="button" @click="addDetail(i)"
-                                            class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">
-                                        ＋ Add Detail
-                                    </button>
                                 </div>
 
                                 <div class="mt-4 space-y-4">
-                                    <template x-for="(det, k) in day.details" :key="k">
-                                        <div class="space-y-2">
-                                            <input :name="`days[${i}][details][${k}][title]`" x-model="det.title" placeholder="Section title"
-                                                   class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500"/>
-                                            <div class="flex gap-2">
-                                                <textarea :name="`days[${i}][details][${k}][description]`" x-model="det.description" rows="3" placeholder="Section description"
-                                                          class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500"></textarea>
-                                                <button type="button" @click="removeDetail(i,k)"
-                                                        class="h-10 self-start rounded-lg border border-gray-200 px-3 text-sm hover:bg-gray-50">Remove</button>
+                                    <div class="space-y-2">
+                                        <input :name="`days[${i}][itinerary_title]`" placeholder="Section title"
+                                               class="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500"/>
+                                        <div class="gap-2">
+                                            <div
+                                                x-bind:data-name="`days[${i}][itinerary_description]`"
+                                                x-bind:data-id="`days[${i}][itinerary_description]`"
+                                            >                                                
+                                                <x-trix-input-alpine
+                                                    placeholder="Section description"
+                                                />
                                             </div>
                                         </div>
-                                    </template>
+                                    </div>
                                 </div>
                             </div>
 
@@ -338,7 +336,7 @@
                 addDay() {
                     this.days.push({
                         title: '', date: '', subtitle: '',
-                        locations: [], details: [], resources: []
+                        locations: [], resources: []
                     });
                 },
                 removeDay(i) { this.days.splice(i, 1); },
@@ -347,9 +345,6 @@
 
                 addLocation(i) { this.days[i].locations.push({ name: '', link_title: '', link_url: '' }); },
                 removeLocation(i, j) { this.days[i].locations.splice(j, 1); },
-
-                addDetail(i) { this.days[i].details.push({ title: '', description: '' }); },
-                removeDetail(i, k) { this.days[i].details.splice(k, 1); },
 
                 addResource(i) { this.days[i].resources.push({ title: '', url: '' }); },
                 removeResource(i, r) { this.days[i].resources.splice(r, 1); },

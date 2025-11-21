@@ -319,22 +319,11 @@
 
                 <!-- Event Details -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Event Details</h4>
-                    <template x-if="!current.details || current.details.length === 0">
-                        <p class="text-sm text-gray-500">No details added.</p>
-                    </template>
+                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Itinierary Details</h4>
 
-                    <template x-for="det in current.details" :key="det.title + det.description">
-                        <div class="mb-4">
-                            <p class="text-xs font-semibold text-gray-700" x-text="det.title"></p>
-                            <p class="text-sm text-gray-700" x-text="det.description"></p>
-                        </div>
-                    </template>
+                    <p class="text-lg font-semibold text-gray-700 mb-4" x-text="current.itinerary_title"></p>
+                    <div class="text-sm text-gray-700" x-html="current.itinerary_description"></div>
                 </div>
-
-
-
-
 
                 <!-- Additional Resources -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">

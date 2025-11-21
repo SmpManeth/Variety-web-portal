@@ -5,12 +5,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Tonysm\RichTextLaravel\Models\Traits\HasRichText;
 
 class EventDay extends Model {
-    use HasFactory;
+    use HasFactory, HasRichText;
 
     protected $fillable = [
-        'event_id','title','date','subtitle','image_path','sort_order'
+        'event_id','title','date','subtitle','image_path','sort_order', 'itinerary_title', 'itinerary_description'
+    ];
+
+    protected $richTextAttributes = [
+        'itinerary_description',
     ];
 
     public function event() {
@@ -19,10 +24,6 @@ class EventDay extends Model {
 
     public function locations() {
         return $this->hasMany(EventDayLocation::class)->orderBy('sort_order');
-    }
-
-    public function details() {
-        return $this->hasMany(EventDayDetail::class)->orderBy('sort_order');
     }
 
     public function resources() {

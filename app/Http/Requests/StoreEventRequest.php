@@ -31,9 +31,8 @@ class StoreEventRequest extends FormRequest
             'days.*.locations.*.link_title'   => ['nullable', 'string', 'max:255'],
             'days.*.locations.*.link_url'     => ['nullable'],
 
-            'days.*.details'                  => ['array'],
-            'days.*.details.*.title'          => ['required_with:days.*.details.*.description', 'string', 'max:255'],
-            'days.*.details.*.description'    => ['nullable', 'string'],
+            'days.*.itinerary_title'          => ['required_with:days.*.itinerary_description', 'string', 'max:255'],
+            'days.*.itinerary_description'    => ['nullable', 'string'],
 
             'days.*.resources'                => ['array'],
             'days.*.resources.*.title'        => ['required_with:days.*.resources.*.url', 'string', 'max:255'],
