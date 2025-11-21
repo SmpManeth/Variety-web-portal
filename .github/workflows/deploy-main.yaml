@@ -14,7 +14,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.2'
+        php-version: '8.3'
 
     - name: Use production env
       run: cp .env.prod .env
@@ -41,12 +41,14 @@ jobs:
     - name: Delete cache
       run: rm -rf /bootstrap/cache/*
 
-    - name: Sync files
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+    - name: Sync files via SFTP
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.6
       with:
         server: ${{ vars.live_ftp_server }}
         username: ${{ vars.live_ftp_user }}
         password: ${{ vars.live_ftp_password }}
+        port: 22
+        remote_path: ${{ vars.live_ftp_dir }}
 
     - name: Check website status
-      run: curl -I http://${{ vars.live_url }}/
+      run: curl -I https://${{ vars.live_url }}/
