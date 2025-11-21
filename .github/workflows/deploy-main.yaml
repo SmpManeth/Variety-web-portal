@@ -1,0 +1,52 @@
+on:
+  push:
+    branches:
+      - main
+name: Deploy main on Push
+jobs:
+  web-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@v2
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+
+    - name: Use production env
+      run: cp .env.prod .env
+
+    - name: Update .env
+      run: |
+        sed -i 's/ACTIONS_APP_NAME/${{ vars.live_app_name }}/g' .env
+        sed -i 's/ACTIONS_APP_KEY/${{ vars.live_app_key }}/g' .env
+        sed -i 's/ACTIONS_URL/${{ vars.live_url }}/g' .env
+        sed -i 's/ACTIONS_DB_HOST/${{ vars.live_db_host }}/g' .env
+        sed -i 's/ACTIONS_DB_NAME/${{ vars.live_db_name }}/g' .env
+        sed -i 's/ACTIONS_DB_USER/${{ vars.live_db_user }}/g' .env
+        sed -i 's/ACTIONS_DB_PASSWORD/${{ vars.live_db_password }}/g' .env
+
+    - name: Install vendors
+      run: composer install --no-dev --optimize-autoloader
+
+    - name: Install node modules
+      run: npm install
+
+    - name: Build static assets
+      run: npm run build
+
+    - name: Delete cache
+      run: rm -rf /bootstrap/cache/*
+
+    - name: Sync files
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ vars.live_ftp_server }}
+        username: ${{ vars.live_ftp_user }}
+        password: ${{ vars.live_ftp_password }}
+
+    - name: Check website status
+      run: curl -I http://${{ vars.live_url }}/

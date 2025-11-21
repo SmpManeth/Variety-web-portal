@@ -6,10 +6,8 @@ use App\Http\Requests\UpdateEventRequest;
 use App\Http\Requests\StoreEventRequest;
 use App\Models\Event;
 use App\Models\EventDay;
-use App\Models\EventDayDetail;
 use App\Models\EventDayLocation;
 use App\Models\EventDayResource;
-use App\Models\EventSponsor;
 use App\Services\EventDeletionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -22,8 +20,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        $events = Event::with('sponsors')
-            ->latest()
+        $events = Event::latest()
             ->get();
 
         return view('pages.events.index', compact('events'));
@@ -39,12 +36,16 @@ class EventController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($data, $request) {
+            $sponsor_image_path = $request->hasFile("sponsor_image")
+                ? $request->file("sponsor_image")->store('events/sponsors', 'public')
+                : null;
+
             $event = Event::create([
-                'title'            => $data['title'],
-                'description'      => $data['description'],
-                'start_date'       => $data['start_date'],
-                'end_date'         => $data['end_date'],
-                'max_participants' => $data['max_participants'],
+                'title'              => $data['title'],
+                'description'        => $data['description'],
+                'start_date'         => $data['start_date'],
+                'end_date'           => $data['end_date'],
+                'sponsor_image_path' => $sponsor_image_path
             ]);
 
             // Days
@@ -64,6 +65,8 @@ class EventController extends Controller
                     'subtitle'   => $dayData['subtitle'] ?? null,
                     'image_path' => $imagePath,
                     'sort_order' => $i,
+                    'itinerary_title' => $dayData['itinerary_title'] ?? '',
+                    'itinerary_description' => $dayData['itinerary_description'] ?? '',
                 ]);
 
                 // Locations
@@ -79,18 +82,6 @@ class EventController extends Controller
                     }
                 }
 
-                // Details
-                foreach (($dayData['details'] ?? []) as $k => $det) {
-                    if (!empty($det['title']) || !empty($det['description'])) {
-                        EventDayDetail::create([
-                            'event_day_id' => $day->id,
-                            'title'        => $det['title'] ?? '',
-                            'description'  => $det['description'] ?? null,
-                            'sort_order'   => $k,
-                        ]);
-                    }
-                }
-
                 // Resources
                 foreach (($dayData['resources'] ?? []) as $r => $res) {
                     if (!empty($res['title']) || !empty($res['url'])) {
@@ -101,18 +92,6 @@ class EventController extends Controller
                             'sort_order'   => $r,
                         ]);
                     }
-                }
-            }
-
-            // Sponsors
-            foreach (($data['sponsors'] ?? []) as $s => $sponsor) {
-                if (!empty($sponsor['name'])) {
-                    EventSponsor::create([
-                        'event_id'  => $event->id,
-                        'name'      => $sponsor['name'],
-                        'logo_url'  => $sponsor['logo_url'] ?? null,
-                        'sort_order' => $s,
-                    ]);
                 }
             }
         });
@@ -130,9 +109,7 @@ class EventController extends Controller
         // Load all relationships in correct order
         $event->load([
             'days.locations',
-            'days.details',
-            'days.resources',
-            'sponsors',
+            'days.resources'
         ]);
 
         // Calculate duration
@@ -147,6 +124,9 @@ class EventController extends Controller
                 'date'      => optional($day->date)->format('l d F Y'),
                 'date_short' => optional($day->date)->format('d/m/Y'),
                 'subtitle'  => $day->subtitle,
+                'itinerary_title'  => $day->itinerary_title,
+                'itinerary_description'  => $day->itinerary_description->render(),
+                'subtitle'  => $day->subtitle,
                 'image'     => $day->image_path
                     ? \Illuminate\Support\Facades\Storage::disk('public')->url($day->image_path)
                     : null,
@@ -154,10 +134,6 @@ class EventController extends Controller
                     'name'       => $l->name,
                     'link_title' => $l->link_title,
                     'link_url'   => $l->link_url,
-                ])->values(),
-                'details'   => $day->details->map(fn($v) => [
-                    'title'       => $v->title,
-                    'description' => $v->description,
                 ])->values(),
                 'resources' => $day->resources->map(fn($r) => [
                     'title' => $r->title,
@@ -178,9 +154,7 @@ class EventController extends Controller
     {
         $event->load([
             'days.locations',
-            'days.details',
             'days.resources',
-            'sponsors',
         ]);
 
         // Pre-format days for Alpine (include IDs + existing image URL)
@@ -195,6 +169,8 @@ class EventController extends Controller
                     : null,
                 'remove_image' => false,
                 'sort_order' => $day->sort_order ?? 0,
+                'itinerary_title' => $day->itinerary_title,
+                'itinerary_description' => $day->itinerary_description->render(),
 
                 'locations'  => $day->locations->map(fn($l) => [
                     'id'         => $l->id,
@@ -202,13 +178,6 @@ class EventController extends Controller
                     'link_title' => $l->link_title,
                     'link_url'   => $l->link_url,
                     'sort_order' => $l->sort_order ?? 0,
-                ])->values(),
-
-                'details'    => $day->details->map(fn($d) => [
-                    'id'          => $d->id,
-                    'title'       => $d->title,
-                    'description' => $d->description,
-                    'sort_order'  => $d->sort_order ?? 0,
                 ])->values(),
 
                 'resources'  => $day->resources->map(fn($r) => [
@@ -220,17 +189,9 @@ class EventController extends Controller
             ];
         })->values();
 
-        $sponsors = $event->sponsors->map(fn($s) => [
-            'id'         => $s->id,
-            'name'       => $s->name,
-            'logo_url'   => $s->logo_url,
-            'sort_order' => $s->sort_order ?? 0,
-        ])->values();
-
         return view('pages.events.edit', [
             'event'        => $event,
             'daysJson'     => $days->toJson(),
-            'sponsorsJson' => $sponsors->toJson(),
         ]);
     }
 
@@ -240,21 +201,24 @@ class EventController extends Controller
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request, $event) {
 
+            if($request->hasFile("sponsor_image")){
+                $sponsor_image_path = $request->file("sponsor_image")->store('events/sponsors', 'public');
+                Storage::disk('public')->delete($event->sponsor_image_path);
+            }
+
             // 1) Update Event main fields
             $event->update([
-                'title'            => $data['title'],
-                'description'      => $data['description'],
-                'start_date'       => $data['start_date'],
-                'end_date'         => $data['end_date'],
-                'max_participants' => $data['max_participants'],
+                'title'              => $data['title'],
+                'description'        => $data['description'],
+                'start_date'         => $data['start_date'],
+                'end_date'           => $data['end_date'],
+                'sponsor_image_path' => $sponsor_image_path ?? $event->sponsor_image_path ?? null
             ]);
 
             // Track IDs to keep (for diff-delete)
             $keepDayIds        = [];
             $keepLocationIds   = [];
-            $keepDetailIds     = [];
             $keepResourceIds   = [];
-            $keepSponsorIds    = [];
 
             // 2) Upsert Days + nested children
             foreach (($data['days'] ?? []) as $i => $dayData) {
@@ -264,6 +228,8 @@ class EventController extends Controller
                     'date'       => $dayData['date'] ?? null,
                     'subtitle'   => $dayData['subtitle'] ?? null,
                     'sort_order' => $dayData['sort_order'] ?? $i,
+                    'itinerary_title' => $dayData['itinerary_title'] ?? '',
+                    'itinerary_description' => $dayData['itinerary_description'] ?? '',
                 ];
 
                 if (!empty($dayData['id'])) {
@@ -326,30 +292,6 @@ class EventController extends Controller
                     $keepLocationIds[] = $location->id;
                 }
 
-                // Details
-                foreach (($dayData['details'] ?? []) as $k => $det) {
-                    if (empty($det['title']) && empty($det['description'])) {
-                        continue;
-                    }
-
-                    $detAttrs = [
-                        'event_day_id' => $day->id,
-                        'title'        => $det['title'] ?? '',
-                        'description'  => $det['description'] ?? null,
-                        'sort_order'   => $det['sort_order'] ?? $k,
-                    ];
-
-                    if (!empty($det['id'])) {
-                        $detail = \App\Models\EventDayDetail::where('event_day_id', $day->id)
-                            ->where('id', $det['id'])->firstOrFail();
-                        $detail->update($detAttrs);
-                    } else {
-                        $detail = \App\Models\EventDayDetail::create($detAttrs);
-                    }
-
-                    $keepDetailIds[] = $detail->id;
-                }
-
                 // Resources
                 foreach (($dayData['resources'] ?? []) as $r => $res) {
                     if (empty($res['title']) && empty($res['url'])) {
@@ -375,30 +317,6 @@ class EventController extends Controller
                 }
             }
 
-            // 3) Upsert Sponsors
-            foreach (($data['sponsors'] ?? []) as $s => $sp) {
-                if (empty($sp['name']) && empty($sp['logo_url'])) {
-                    continue;
-                }
-
-                $spAttrs = [
-                    'event_id'   => $event->id,
-                    'name'       => $sp['name'] ?? '',
-                    'logo_url'   => $sp['logo_url'] ?? null,
-                    'sort_order' => $sp['sort_order'] ?? $s,
-                ];
-
-                if (!empty($sp['id'])) {
-                    $sponsor = \App\Models\EventSponsor::where('event_id', $event->id)
-                        ->where('id', $sp['id'])->firstOrFail();
-                    $sponsor->update($spAttrs);
-                } else {
-                    $sponsor = \App\Models\EventSponsor::create($spAttrs);
-                }
-
-                $keepSponsorIds[] = $sponsor->id;
-            }
-
             // 4) Diff-delete removed items
             // Days not in $keepDayIds
             \App\Models\EventDay::where('event_id', $event->id)
@@ -419,21 +337,15 @@ class EventController extends Controller
             if (!empty($keepDayIds)) {
                 \App\Models\EventDayLocation::whereIn('event_day_id', $keepDayIds)
                     ->whereNotIn('id', $keepLocationIds ?: [0])->delete();
-                \App\Models\EventDayDetail::whereIn('event_day_id', $keepDayIds)
-                    ->whereNotIn('id', $keepDetailIds ?: [0])->delete();
                 \App\Models\EventDayResource::whereIn('event_day_id', $keepDayIds)
                     ->whereNotIn('id', $keepResourceIds ?: [0])->delete();
             }
-
-            \App\Models\EventSponsor::where('event_id', $event->id)
-                ->whereNotIn('id', $keepSponsorIds ?: [0])->delete();
         });
 
         return redirect()
             ->route('events.show', $event)
             ->with('success', 'Event updated successfully.');
     }
-
 
     /**
      * Remove the specified resource from storage.

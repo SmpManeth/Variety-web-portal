@@ -112,7 +112,7 @@
                         <div>
                             <p class="text-xs uppercase tracking-wide text-gray-500 font-semibold">Participants</p>
                             <p class="text-sm text-gray-800">
-                                {{ $event->participants->count() }} / {{ $event->max_participants }}
+                                {{ $event->participants->count() }}
                             </p>
                         </div>
                     </div>
@@ -319,22 +319,11 @@
 
                 <!-- Event Details -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Event Details</h4>
-                    <template x-if="!current.details || current.details.length === 0">
-                        <p class="text-sm text-gray-500">No details added.</p>
-                    </template>
+                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Itinierary Details</h4>
 
-                    <template x-for="det in current.details" :key="det.title + det.description">
-                        <div class="mb-4">
-                            <p class="text-xs font-semibold text-gray-700" x-text="det.title"></p>
-                            <p class="text-sm text-gray-700" x-text="det.description"></p>
-                        </div>
-                    </template>
+                    <p class="text-lg font-semibold text-gray-700 mb-4" x-text="current.itinerary_title"></p>
+                    <div class="text-sm text-gray-700" x-html="current.itinerary_description"></div>
                 </div>
-
-
-
-
 
                 <!-- Additional Resources -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
@@ -362,21 +351,12 @@
             <h4 class="text-sm font-semibold text-gray-900">Event Sponsors</h4>
             <p class="text-xs text-gray-500 mb-4">Thank you to our generous sponsors who make this event possible.</p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                @forelse ($event->sponsors as $s)
-                <div class="rounded-xl border border-gray-200 bg-white p-4 text-center">
-                    <div class="mx-auto h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                        @if($s->logo_url)
-                        <img src="{{ $s->logo_url }}" alt="{{ $s->name }}" class="h-10 object-contain">
-                        @else
-                        <i class="fa-regular fa-image text-gray-400"></i>
-                        @endif
-                    </div>
-                    <p class="mt-3 text-xs font-semibold text-gray-800">{{ $s->name }}</p>
-                </div>
-                @empty
+            <div>
+                @if ($event->sponsor_image_path)
+                    <img src="/storage/{{ $event->sponsor_image_path }}" class="w-full md:w-1/3 rounded-lg">
+                @else
                 <p class="text-sm text-gray-500">No sponsors added.</p>
-                @endforelse
+                @endif
             </div>
         </section>
     </div>

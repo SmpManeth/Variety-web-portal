@@ -14,7 +14,7 @@ class Event extends Model
         'description',
         'start_date',
         'end_date',
-        'max_participants'
+        'sponsor_image_path'
     ];
 
     protected $casts = [
@@ -26,13 +26,8 @@ class Event extends Model
         return $this->hasMany(EventDay::class)->orderBy('sort_order');
     }
 
-    public function sponsors()
-    {
-        return $this->hasMany(EventSponsor::class)->orderBy('sort_order');
-    }
     public function participants()
-{
-    return $this->hasMany(EventParticipant::class);
-}
-
+    {
+        return $this->hasMany(EventParticipant::class);
+    }
 }
