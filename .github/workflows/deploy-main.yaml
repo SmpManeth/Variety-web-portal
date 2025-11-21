@@ -48,6 +48,7 @@ jobs:
         username: ${{ vars.live_ftp_user }}
         password: ${{ vars.live_ftp_password }}
         port: 22
+        local_path: './'
         remote_path: ${{ vars.live_ftp_dir }}
 
     - name: Check website status
