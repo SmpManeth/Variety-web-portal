@@ -234,10 +234,13 @@ class MedicalRecordController extends Controller
                 $dob = null;
 
                 if (isset($row[14]) && !empty($row[14])) {
+                    $rawDate = str_replace("-", "/", trim($row[14]));
+
                     try {
-                        $dob = Carbon::parse(
-                            str_replace("/", "-", $row[14]),
-                        )->format("Y-m-d");
+                        $dob = Carbon::createFromFormat(
+                            "d/m/Y",
+                            $rawDate,
+                        )->format("Y/m/d");
                     } catch (\Exception $e) {
                         $dob = null;
                     }
