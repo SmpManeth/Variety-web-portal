@@ -160,7 +160,7 @@
                             <p class="text-neutral-800 text-sm">
                                 {{ $comment->created_at->format('M j, Y h:i:s') }}
                             </p>
-                            <form action="{{ route('medical-record-comments.destroy', $comment) }}" method="POST">
+                            <form action="{{ route('medical-record-comments.destroy', $comment) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this comment?');">
                                 @method("DELETE")
                                 @csrf
                                 <button type="submit" class="text-red-600 text-sm">Remove</button>
@@ -200,7 +200,7 @@
                                 <p class="text-neutral-800 text-sm">
                                     {{ $image->created_at->format('M j, Y h:i:s') }}
                                 </p>
-                                <form action="{{ route('medical-record-images.destroy', $image) }}" method="POST">
+                                <form action="{{ route('medical-record-images.destroy', $image) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this image?');">
                                     @method("DELETE")
                                     @csrf
                                     <button type="submit" class="text-red-600 text-sm">Remove</button>
