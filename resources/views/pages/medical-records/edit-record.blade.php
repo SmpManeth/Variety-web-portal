@@ -175,11 +175,11 @@
 
             <div class="flex flex-wrap gap-3 items-center pb-8">
                 <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700">
+                    class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700">
                     Save changes
                 </button>
                 <a href="{{ route('medical-records.show-record', [$event, $record]) }}"
-                    class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                    class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                     Cancel
                 </a>
             </div>
