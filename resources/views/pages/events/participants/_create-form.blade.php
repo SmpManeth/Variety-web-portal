@@ -78,7 +78,7 @@
 
     <div class="flex justify-end gap-3">
         <button type="button"
-                @click="$dispatch('close-modal')"
+                @click="openModal = false"
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
             Cancel
         </button>
