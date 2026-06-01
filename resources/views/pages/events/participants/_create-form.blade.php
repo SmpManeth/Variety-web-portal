@@ -7,44 +7,53 @@
         <div>
             <label class="block text-sm font-medium text-gray-700">First Name *</label>
             <input type="text" name="first_name" required
+                   x-model="modalData.first_name"
                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700">Last Name</label>
             <input type="text" name="last_name"
+                   x-model="modalData.last_name"
                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700">Email</label>
             <input type="email" name="email"
+                   x-model="modalData.email"
                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700">Phone</label>
             <input type="text" name="phone"
+                   x-model="modalData.phone"
                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
         </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700">Vehicle</label>
-            <input type="text" name="vehicle" min="1"
+            <input type="text" name="vehicle"
+                   x-model="modalData.vehicle"
                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-gray-700">Status</label>
-            <select name="status" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500">
+            <label class="block text-sm font-medium text-gray-700">Status *</label>
+            <select name="status" required
+                    x-model="modalData.status"
+                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500">
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
             </select>
         </div>
 
-        <div>
+        <div class="md:col-span-2">
             <label class="block text-sm font-medium text-gray-700">Roles</label>
-            <select name="roles[]" multiple class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500">
+            <select name="roles[]" multiple
+                    x-model="modalData.roles"
+                    class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500">
                 @foreach(\App\Models\Role::whereNotIn('name', ['Super Admin', 'Administrator'])->get() as $role)
                     <option value="{{ $role->id }}">{{ $role->name }}</option>
                 @endforeach
@@ -59,30 +68,31 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700">Contact Name</label>
                 <input type="text" name="emergency_contact_name"
+                       x-model="modalData.emergency_contact_name"
                        class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Contact Phone</label>
                 <input type="text" name="emergency_contact_phone"
+                       x-model="modalData.emergency_contact_phone"
                        class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Relationship</label>
                 <input type="text" name="emergency_contact_relationship"
+                       x-model="modalData.emergency_contact_relationship"
                        class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
             </div>
         </div>
     </div>
 
     <div class="flex justify-end gap-3">
-        <button type="button"
-                @click="openModal = false"
+        <button type="button" @click="openModal = false"
                 class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50">
             Cancel
         </button>
-
         <button type="submit"
                 class="rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700">
             Add Participant

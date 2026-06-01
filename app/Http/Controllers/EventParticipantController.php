@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreEventParticipantRequest;
+use App\Http\Requests\UpdateEventParticipantRequest;
 use App\Models\Event;
 use App\Models\EventParticipant;
 use App\Services\EventParticipantService;
@@ -63,8 +64,10 @@ final class EventParticipantController extends Controller
         return back()->with("success", "Participant deleted.");
     }
 
-    public function bulkDestroy(Request $request, Event $event): RedirectResponse
-    {
+    public function bulkDestroy(
+        Request $request,
+        Event $event,
+    ): RedirectResponse {
         if (Auth::user()->cannot("deleteParticipants", Event::class)) {
             abort(403);
         }
@@ -76,22 +79,13 @@ final class EventParticipantController extends Controller
 
         $ids = array_values(array_unique($validated["participant_ids"]));
 
-        $countInEvent = $event
-            ->participants()
-            ->whereIn("id", $ids)
-            ->count();
+        $countInEvent = $event->participants()->whereIn("id", $ids)->count();
 
         abort_unless($countInEvent === count($ids), 403);
 
-        $deleted = $event
-            ->participants()
-            ->whereIn("id", $ids)
-            ->delete();
+        $deleted = $event->participants()->whereIn("id", $ids)->delete();
 
-        return back()->with(
-            "success",
-            "{$deleted} participant(s) deleted.",
-        );
+        return back()->with("success", "{$deleted} participant(s) deleted.");
     }
 
     public function downloadTemplate()
@@ -138,7 +132,7 @@ final class EventParticipantController extends Controller
     }
 
     public function update(
-        Request $request,
+        UpdateEventParticipantRequest $request,
         Event $event,
         EventParticipant $participant,
     ) {
@@ -146,17 +140,7 @@ final class EventParticipantController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            "full_name" => "required|string|max:255",
-            "email" => "nullable|email|max:255",
-            "phone" => "nullable|string|max:50",
-            "vehicle" => "nullable|string|max:255",
-            "emergency_contact_name" => "nullable|string|max:255",
-            "emergency_contact_relationship" => "nullable|string|max:255",
-            "roles" => "nullable|array",
-            "roles.*" => "nullable|exists:roles,id",
-        ]);
-
+        $validated = $request->validated();
         $participant->update($validated);
 
         // Handle role assignment

@@ -2,12 +2,37 @@
     <div class="max-w-7xl mx-auto p-6"
         x-data="{
             days: {{ $daysJson }},
+            participants: {{ $participantsJson }},
             selected: 0,
             showParticipants: localStorage.getItem('showParticipants') === 'true',
             openModal: false,
             modalType: null,
             modalData: {},
+            selectedParticipantIds: [],
+            participantSearch: '',
+
             get current() { return this.days[this.selected] || {}; },
+
+            get filteredParticipants() {
+                const query = this.participantSearch.trim().toLowerCase();
+                if (!query) return this.participants;
+                return this.participants.filter(p => {
+                    const searchHaystack = [
+                        p.first_name,
+                        p.last_name,
+                        p.email,
+                        p.phone,
+                        p.vehicle,
+                        p.emergency_contact_name,
+                        p.emergency_contact_relationship,
+                        p.emergency_contact_phone,
+                        p.role_names,
+                        p.status
+                    ].filter(Boolean).join(' ').toLowerCase();
+                    return searchHaystack.includes(query);
+                });
+            },
+
             select(idx) {
                 this.selected = idx;
                 if (window.innerWidth < 1024) {
@@ -16,26 +41,38 @@
                     }, 0);
                 }
             },
+
             toggleParticipants() {
                 this.showParticipants = !this.showParticipants;
                 localStorage.setItem('showParticipants', this.showParticipants);
                 if (this.showParticipants) {
                     this.$nextTick(() => {
-                        document.getElementById('participants-section')?.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
+                        document.getElementById('participants-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     });
                 }
             },
+
             openAddModal() {
                 this.modalType = 'create';
-                this.modalData = {};
+                this.modalData = {
+                    first_name: '',
+                    last_name: '',
+                    email: '',
+                    phone: '',
+                    vehicle: '',
+                    status: 'active',
+                    emergency_contact_name: '',
+                    emergency_contact_phone: '',
+                    emergency_contact_relationship: '',
+                    roles: []
+                };
                 this.openModal = true;
             },
+
             openEditModal(p) {
                 this.modalType = 'edit';
-                this.modalData = { ...p };
+                // Duplicate the referenced JSON object to prevent changing live state before saving
+                this.modalData = JSON.parse(JSON.stringify(p));
                 this.openModal = true;
             }
         }">
@@ -160,74 +197,15 @@
         </div>
 
         <!-- Participants Management -->
-        <section id="participants-section" x-show="showParticipants" x-transition class="mt-6 space-y-6">
+        <section id="participants-section" x-show="showParticipants" x-transition class="mt-6 space-y-6" x-cloak>
             @php
                 $participantTableColspan = auth()->user()->can('manage participants') ? 8 : 7;
             @endphp
-            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" x-data="{
-                selectedParticipantIds: [],
-                participantSearch: '',
-                participantVisibleCount: {{ $event->participants->count() }},
-                participantSearchNorm() {
-                    return (this.participantSearch || '').trim().toLowerCase();
-                },
-                participantHaystackFromTr(tr) {
-                    return (tr && tr.dataset && tr.dataset.search) ? String(tr.dataset.search) : '';
-                },
-                participantRowVisible(tr) {
-                    const q = this.participantSearchNorm();
-                    if (!q) return true;
-                    return this.participantHaystackFromTr(tr).includes(q);
-                },
-                visibleParticipantCheckboxEls() {
-                    return Array.from(this.$root.querySelectorAll('tr[data-participant-row] input[data-participant-checkbox]')).filter((cb) => {
-                        const tr = cb.closest('tr[data-participant-row]');
-                        return tr && this.participantRowVisible(tr);
-                    });
-                },
-                updateParticipantFilterState() {
-                    const rows = Array.from(this.$root.querySelectorAll('tr[data-participant-row]'));
-                    this.participantVisibleCount = rows.filter((tr) => this.participantRowVisible(tr)).length;
-                },
-                toggleAllParticipants(e) {
-                    const checked = Boolean(e.target.checked);
-                    const visibleBoxes = this.visibleParticipantCheckboxEls();
-                    const visibleIds = visibleBoxes.map((cb) => Number(cb.value));
-
-                    if (checked) {
-                        this.selectedParticipantIds = Array.from(new Set([...this.selectedParticipantIds, ...visibleIds]));
-                        return;
-                    }
-
-                    const visibleIdSet = new Set(visibleIds);
-                    this.selectedParticipantIds = this.selectedParticipantIds.filter((id) => !visibleIdSet.has(Number(id)));
-                },
-                onParticipantSearchInput() {
-                    this.$nextTick(() => this.updateParticipantFilterState());
-
-                    const q = this.participantSearchNorm();
-                    if (!q) {
-                        return;
-                    }
-
-                    this.selectedParticipantIds = this.selectedParticipantIds.filter((id) => {
-                        const cb = this.$root.querySelector(`input[data-participant-checkbox][value='${id}']`);
-                        if (!cb) return false;
-                        const tr = cb.closest('tr[data-participant-row]');
-                        return tr && this.participantRowVisible(tr);
-                    });
-                },
-                allVisibleParticipantsSelected() {
-                    const visibleBoxes = this.visibleParticipantCheckboxEls();
-                    if (visibleBoxes.length === 0) return false;
-                    const selected = new Set(this.selectedParticipantIds.map(Number));
-                    return visibleBoxes.every((cb) => selected.has(Number(cb.value)));
-                }
-            }" x-init="updateParticipantFilterState()">
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold flex items-center gap-2 text-gray-900">
                         <i class="fa-solid fa-user-group text-red-600"></i>
-                        Event Participants ({{ $event->participants->count() }})
+                        Event Participants (<span x-text="participants.length"></span>)
                     </h2>
 
                     @can('manage participants')
@@ -275,7 +253,6 @@
                         </span>
                         <input id="participant-search" type="search" placeholder="Name, email, phone, vehicle, roles…"
                             x-model="participantSearch"
-                            @input="onParticipantSearchInput()"
                             class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
                     </div>
                 </div>
@@ -288,8 +265,8 @@
                                 <th class="px-4 py-2 font-medium w-10">
                                     <input type="checkbox"
                                         class="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                                        @change="toggleAllParticipants($event)"
-                                        :checked="allVisibleParticipantsSelected()">
+                                        @change="if ($event.target.checked) { selectedParticipantIds = filteredParticipants.map(p => p.id) } else { selectedParticipantIds = [] }"
+                                        :checked="filteredParticipants.length > 0 && selectedParticipantIds.length === filteredParticipants.length">
                                 </th>
                                 @endcan
                                 <th class="px-4 py-2 font-medium">Name</th>
@@ -302,104 +279,82 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @forelse($event->participants as $p)
-                                @php
-                                    $participantSearchHaystack = \Illuminate\Support\Str::lower(implode(' ', array_filter([
-                                        $p->full_name,
-                                        $p->email,
-                                        $p->phone,
-                                        $p->vehicle,
-                                        $p->emergency_contact_name,
-                                        $p->emergency_contact_relationship,
-                                        $p->emergency_contact_phone,
-                                        $p->role_names,
-                                        $p->status,
-                                    ], fn ($v) => filled($v))));
-                                @endphp
-                                <tr
-                                    data-participant-row
-                                    data-search="{{ e($participantSearchHaystack) }}"
-                                    x-show="participantRowVisible($el)"
-                                    x-cloak>
+                            <template x-if="participants.length === 0">
+                                <tr>
+                                    <td colspan="{{ $participantTableColspan }}" class="px-4 py-6 text-center text-gray-500">No participants yet.</td>
+                                </tr>
+                            </template>
+
+                            <template x-if="participants.length > 0 && filteredParticipants.length === 0">
+                                <tr>
+                                    <td colspan="{{ $participantTableColspan }}" class="px-4 py-6 text-center text-gray-500">
+                                        No participants match your search criteria.
+                                    </td>
+                                </tr>
+                            </template>
+
+                            <template x-for="p in filteredParticipants" :key="p.id">
+                                <tr class="hover:bg-gray-50/50 transition duration-150">
                                     @can('manage participants')
                                     <td class="px-4 py-2">
                                         <input type="checkbox"
-                                            data-participant-checkbox
-                                            value="{{ $p->id }}"
+                                            :value="p.id"
                                             class="rounded border-gray-300 text-red-600 focus:ring-red-500"
                                             x-model="selectedParticipantIds">
                                     </td>
                                     @endcan
+
                                     <td class="px-4 py-2 font-semibold text-gray-900">
-                                        {{ $p->full_name }}
-                                        <div class="text-xs text-gray-500">{{ $p->email }}</div>
+                                        <span x-text="(p.first_name + ' ' + (p.last_name || '')).trim()"></span>
+                                        <div class="text-xs text-gray-500 font-normal" x-text="p.email || '—'"></div>
                                     </td>
-                                    <td class="px-4 py-2">{{ $p->vehicle ?? '—' }}</td>
-                                    <td class="px-4 py-2">{{ $p->phone ?? '—' }}</td>
+
+                                    <td class="px-4 py-2 text-gray-600" x-text="p.vehicle || '—'"></td>
+
+                                    <td class="px-4 py-2 text-gray-600" x-text="p.phone || '—'"></td>
+
                                     <td class="px-4 py-2">
-                                        {{ $p->emergency_contact_name ?? '—' }}
-                                        <div class="text-xs text-gray-500">{{ $p->emergency_contact_relationship }}</div>
+                                        <span class="text-gray-800" x-text="p.emergency_contact_name || '—'"></span>
+                                        <div class="text-xs text-gray-500" x-text="p.emergency_contact_relationship || ''"></div>
                                     </td>
+
+                                    <td class="px-4 py-2 text-gray-600" x-text="p.role_names || '—'"></td>
+
                                     <td class="px-4 py-2">
-                                        {{ $p->role_names ?? '—' }}
-                                    </td>
-                                    <td class="px-4 py-2">
-                                        <span class="px-2 py-0.5 text-xs rounded-full font-medium
-                                            {{ $p->status === 'active' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600' }}">
-                                            {{ $p->status }}
+                                        <span class="px-2 py-0.5 text-xs rounded-full font-medium"
+                                              :class="p.status === 'active' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'"
+                                              x-text="p.status">
                                         </span>
                                     </td>
 
                                     @can('manage participants')
-                                    <td class="px-4 py-2 text-right flex justify-end gap-2">
-                                        <button type="button"
-                                            @click="openEditModal({
-                                                id: {{ $p->id }},
-                                                full_name: '{{ $p->full_name }}',
-                                                email: '{{ $p->email }}',
-                                                phone: '{{ $p->phone }}',
-                                                vehicle: '{{ $p->vehicle }}',
-                                                emergency_contact_name: '{{ $p->emergency_contact_name }}',
-                                                emergency_contact_relationship: '{{ $p->emergency_contact_relationship }}',
-                                                status: '{{ $p->status }}',
-                                                roles: [{{ $p->roles->pluck('id')->implode(',') }}]
-                                            })"
-                                            class="text-gray-600 hover:text-gray-800">
-                                            <i class="fa-solid fa-pen"></i>
-                                        </button>
-
-                                        <form method="POST" action="{{ route('participants.destroy', [$event, $p]) }}">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Delete participant?')">
-                                                <i class="fa-solid fa-trash"></i>
+                                    <td class="px-4 py-2 text-right">
+                                        <div class="flex justify-end gap-3">
+                                            <button type="button"
+                                                @click="openEditModal(p)"
+                                                class="text-gray-500 hover:text-gray-800 transition">
+                                                <i class="fa-solid fa-pen text-sm"></i>
                                             </button>
-                                        </form>
+
+                                            <form method="POST" :action="`/events/{{ $event->id }}/participants/${p.id}`">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-500 hover:text-red-700 transition" onclick="return confirm('Delete participant?')">
+                                                    <i class="fa-solid fa-trash text-sm"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                     @else
-                                    <td class="px-4 py-2 text-right flex justify-end gap-2">
-                                        -
-                                    </td>
+                                    <td class="px-4 py-2 text-right text-gray-400">—</td>
                                     @endcan
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="{{ $participantTableColspan }}" class="px-4 py-6 text-center text-gray-500">No participants yet.</td>
-                                </tr>
-                            @endforelse
-
-                            @if ($event->participants->isNotEmpty())
-                                <tr x-show="participantSearchNorm() && participantVisibleCount === 0" x-cloak>
-                                    <td colspan="{{ $participantTableColspan }}" class="px-4 py-6 text-center text-gray-500">
-                                        No participants match your search.
-                                    </td>
-                                </tr>
-                            @endif
+                            </template>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Add/Edit Modal -->
             <div x-show="openModal" x-cloak class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
                 <div @click.outside="openModal = false" class="bg-white rounded-xl w-full max-w-2xl p-6">
                     <template x-if="modalType === 'create'">
@@ -407,7 +362,7 @@
                     </template>
 
                     <template x-if="modalType === 'edit'">
-                    @include('pages.events.participants._edit-form', ['event' => $event])
+                        @include('pages.events.participants._edit-form', ['event' => $event])
                     </template>
                 </div>
             </div>
