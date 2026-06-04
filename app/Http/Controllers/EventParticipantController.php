@@ -22,7 +22,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 final class EventParticipantController extends Controller
 {
     /**
-     * Import participants from Excel file.
+     * Fetch participants as JSON.
      */
     public function indexAjax(Request $request, Event $event): JsonResponse
     {
@@ -32,28 +32,82 @@ final class EventParticipantController extends Controller
 
         return response()->json([
             "success" => true,
-            "participants" => $event->participants,
+            "participants" => $event->participants()->with("roles")->get(),
         ]);
     }
 
+    /**
+     * Store a newly created participant.
+     */
     public function store(
         StoreEventParticipantRequest $request,
         Event $event,
         EventParticipantService $service,
-    ): RedirectResponse {
+    ) {
         if (Auth::user()->cannot("createParticipants", Event::class)) {
             abort(403);
         }
 
-        $service->create($event, $request->validated());
+        $participant = $service->create($event, $request->validated());
+        $participant->load("roles");
+
+        if ($request->wantsJson()) {
+            return response()->json(
+                [
+                    "success" => true,
+                    "message" => "Participant added successfully.",
+                    "participant" => $participant,
+                ],
+                201,
+            );
+        }
+
         return back()->with("success", "Participant added successfully.");
     }
 
-    public function destroy(
+    /**
+     * Update the specified participant.
+     */
+    public function update(
+        UpdateEventParticipantRequest $request,
         Event $event,
         EventParticipant $participant,
-    ): RedirectResponse {
-        if (Auth::user()->cannot("deleteParticipants", Event::class)) {
+    ): JsonResponse {
+        if (Auth::user()->cannot("updateParticipants", Event::class)) {
+            abort(403);
+        }
+
+        $validated = $request->validated();
+        $participant->update($validated);
+
+        // Handle role assignment
+        if (isset($validated["roles"]) && \is_array($validated["roles"])) {
+            $allowedRoles = \App\Models\Role::whereNotIn("name", [
+                "Super Admin",
+                "Administrator",
+            ])
+                ->whereIn("id", $validated["roles"])
+                ->pluck("id");
+
+            $participant->roles()->sync($allowedRoles);
+        }
+
+        return response()->json([
+            "success" => true,
+            "message" => "Participant updated successfully.",
+            "participant" => $participant->load("roles"),
+        ]);
+    }
+
+    /**
+     * Delete a single participant.
+     */
+    public function destroy(
+        Request $request,
+        Event $event,
+        EventParticipant $participant,
+    ) {
+        if (Auth::user()->cannot("deleteParticipant", Event::class)) {
             abort(403);
         }
 
@@ -61,13 +115,21 @@ final class EventParticipantController extends Controller
 
         $participant->delete();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                "success" => true,
+                "message" => "Participant deleted successfully.",
+            ]);
+        }
+
         return back()->with("success", "Participant deleted.");
     }
 
-    public function bulkDestroy(
-        Request $request,
-        Event $event,
-    ): RedirectResponse {
+    /**
+     * Bulk delete participants.
+     */
+    public function bulkDestroy(Request $request, Event $event)
+    {
         if (Auth::user()->cannot("deleteParticipants", Event::class)) {
             abort(403);
         }
@@ -78,24 +140,31 @@ final class EventParticipantController extends Controller
         ]);
 
         $ids = array_values(array_unique($validated["participant_ids"]));
-
         $countInEvent = $event->participants()->whereIn("id", $ids)->count();
 
         abort_unless($countInEvent === count($ids), 403);
 
         $deleted = $event->participants()->whereIn("id", $ids)->delete();
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                "success" => true,
+                "message" => "{$deleted} participant(s) deleted.",
+            ]);
+        }
+
         return back()->with("success", "{$deleted} participant(s) deleted.");
     }
 
+    /**
+     * Download Excel Template.
+     */
     public function downloadTemplate()
     {
-        // Create new spreadsheet
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle("Participants Template");
 
-        // Define header columns
         $headers = [
             "First Name",
             "Last Name",
@@ -109,19 +178,16 @@ final class EventParticipantController extends Controller
             "Roles (comma separated, exclude admin/superadmin)",
         ];
 
-        // Write headers to first row
         $col = "A";
         foreach ($headers as $header) {
             $sheet->setCellValue("{$col}1", $header);
             $col++;
         }
 
-        // Auto-size columns
         foreach (range("A", $sheet->getHighestColumn()) as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 
-        // Prepare for download
         $writer = new Xlsx($spreadsheet);
         $tempFile = tempnam(sys_get_temp_dir(), "participants_template_");
         $writer->save($tempFile);
@@ -129,34 +195,6 @@ final class EventParticipantController extends Controller
         return response()
             ->download($tempFile, "participants_template.xlsx")
             ->deleteFileAfterSend(true);
-    }
-
-    public function update(
-        UpdateEventParticipantRequest $request,
-        Event $event,
-        EventParticipant $participant,
-    ) {
-        if (Auth::user()->cannot("updateParticipants", Event::class)) {
-            abort(403);
-        }
-
-        $validated = $request->validated();
-        $participant->update($validated);
-
-        // Handle role assignment
-        if (isset($validated["roles"]) && is_array($validated["roles"])) {
-            // Filter out admin/superadmin roles
-            $allowedRoles = \App\Models\Role::whereNotIn("name", [
-                "Super Admin",
-                "Administrator",
-            ])
-                ->whereIn("id", $validated["roles"])
-                ->pluck("id");
-
-            $participant->roles()->sync($allowedRoles);
-        }
-
-        return back()->with("success", "Participant updated successfully.");
     }
 
     /**
@@ -169,20 +207,18 @@ final class EventParticipantController extends Controller
         }
 
         $request->validate([
-            "file" => "required|mimes:xlsx,xls", // max 5 MB
+            "file" => "required|mimes:xlsx,xls",
         ]);
 
         try {
             $file = $request->file("file");
             $path = $file->getRealPath();
 
-            // Load Excel using PhpSpreadsheet directly
             $spreadsheet = IOFactory::load($path);
             $sheet = $spreadsheet->getActiveSheet();
             $rows = $sheet->toArray(null, true, true, true);
 
-            // Remove header row
-            unset($rows[1]);
+            unset($rows[1]); // Drop headers
 
             $importedCount = 0;
 
@@ -210,7 +246,6 @@ final class EventParticipantController extends Controller
                         "status" => $status,
                     ]);
 
-                    // Handle roles if present in the import
                     if (isset($row["J"]) && trim($row["J"])) {
                         $roleNames = explode(",", trim($row["J"]));
                         $roles = \App\Models\Role::whereIn("name", $roleNames)

@@ -8,76 +8,147 @@
             openModal: false,
             modalType: null,
             modalData: {},
+            errors: {},
             selectedParticipantIds: [],
             participantSearch: '',
+            submitting: false,
 
-            get current() { return this.days[this.selected] || {}; },
+            get current() {
+                return this.days[this.selected] || {};
+            },
 
-            get filteredParticipants() {
-                const query = this.participantSearch.trim().toLowerCase();
-                if (!query) return this.participants;
-                return this.participants.filter(p => {
-                    const searchHaystack = [
-                        p.first_name,
-                        p.last_name,
-                        p.email,
-                        p.phone,
-                        p.vehicle,
-                        p.emergency_contact_name,
-                        p.emergency_contact_relationship,
-                        p.emergency_contact_phone,
-                        p.role_names,
-                        p.status
-                    ].filter(Boolean).join(' ').toLowerCase();
-                    return searchHaystack.includes(query);
-                });
+            toggleParticipants() {
+                this.showParticipants = !this.showParticipants;
+                localStorage.setItem('showParticipants', this.showParticipants);
             },
 
             select(idx) {
                 this.selected = idx;
                 if (window.innerWidth < 1024) {
                     setTimeout(() => {
-                        document.querySelector('section.lg\\:col-span-8')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        document.querySelector('section.lg\\:col-span-8')?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
                     }, 0);
                 }
             },
 
-            toggleParticipants() {
-                this.showParticipants = !this.showParticipants;
-                localStorage.setItem('showParticipants', this.showParticipants);
-                if (this.showParticipants) {
-                    this.$nextTick(() => {
-                        document.getElementById('participants-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    });
-                }
+            get filteredParticipants() {
+                const query = this.participantSearch.trim().toLowerCase();
+                if (!query) return this.participants;
+                return this.participants.filter(p => {
+                    return [
+                        p.first_name, p.last_name, p.email, p.phone, p.vehicle,
+                        p.emergency_contact_name, p.emergency_contact_relationship,
+                        p.emergency_contact_phone, p.role_names, p.status
+                    ].filter(Boolean).join(' ').toLowerCase().includes(query);
+                });
             },
 
             openAddModal() {
                 this.modalType = 'create';
+                this.errors = {};
                 this.modalData = {
-                    first_name: '',
-                    last_name: '',
-                    email: '',
-                    phone: '',
-                    vehicle: '',
-                    status: 'active',
-                    emergency_contact_name: '',
-                    emergency_contact_phone: '',
-                    emergency_contact_relationship: '',
-                    roles: []
+                    id: '', first_name: '', last_name: '', email: '', phone: '', vehicle: '',
+                    status: 'active', emergency_contact_name: '', emergency_contact_phone: '',
+                    emergency_contact_relationship: '', roles: []
                 };
                 this.openModal = true;
             },
 
             openEditModal(p) {
                 this.modalType = 'edit';
-                // Duplicate the referenced JSON object to prevent changing live state before saving
-                this.modalData = JSON.parse(JSON.stringify(p));
+                this.errors = {};
+                const roleIds = p.roles ? p.roles.map(r => r.id || r) : (p.role_ids || []);
+                this.modalData = JSON.parse(JSON.stringify({ ...p, roles: roleIds }));
                 this.openModal = true;
+            },
+
+            async submitForm(e) {
+                const isEdit = this.modalType === 'edit';
+                const url = isEdit
+                    ? `/events/{{ $event->id }}/participants/${this.modalData.id}`
+                    : `{{ route('participants.store', $event) }}`;
+
+                const method = isEdit ? 'PUT' : 'POST';
+
+                // Prevent passing empty-string IDs down to the database row processors
+                let payload = { ...this.modalData };
+                if (!isEdit) {
+                    delete payload.id;
+                }
+
+                this.submitting = true;
+                this.errors = {};
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            _method: method,
+                            ...payload
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        if (response.status === 422) {
+                            this.errors = data.errors;
+                        } else {
+                            alert(data.message || 'An error occurred.');
+                        }
+                        return;
+                    }
+
+                    if (data.success) {
+                        window.location.href = data.redirect || '{{ url()->current() }}';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('A network error occurred.');
+                } finally {
+                    this.submitting = false;
+                }
+            },
+
+            async deleteParticipant(pId) {
+                if (!confirm('Are you sure you want to delete this participant?')) return;
+
+                this.submitting = true;
+
+                try {
+                    const response = await fetch(`/events/{{ $event->id }}/participants/${pId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ _method: 'DELETE' })
+                    });
+
+                    if (response.ok) {
+                        this.participants = this.participants.filter(p => p.id !== pId);
+                    } else {
+                        const data = await response.json();
+                        alert(data.message || 'Could not delete participant.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('A network error occurred.');
+                } finally {
+                    this.submitting = false;
+                }
             }
         }">
 
-        <!-- Top: Back + Title + Actions -->
         <div class="flex items-center justify-between">
             <a href="{{ route('events.index') }}"
                 class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900">
@@ -126,20 +197,17 @@
             </div>
         </div>
 
-        <!-- Title + subtitle -->
         <div class="mt-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-900">{{ $event->title }}</h1>
             <p class="text-gray-500 text-sm">{{ \Illuminate\Support\Str::limit($event->description, 180) }}</p>
         </div>
 
-        <!-- Cover Image -->
         @if ($event->cover_image_path)
         <div class="mt-4">
             <img src="/storage/{{ $event->cover_image_path }}" class="w-full h-32 md:h-64 object-cover rounded-xl border border-gray-200 shadow-sm">
         </div>
         @endif
 
-        <!-- Summary Card -->
         <div class="mt-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
@@ -151,7 +219,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full md:w-auto">
-                    <!-- Start Date -->
                     <div class="flex items-start gap-3">
                         <i class="fa-regular fa-calendar text-red-600 mt-0.5"></i>
                         <div>
@@ -162,7 +229,6 @@
                         </div>
                     </div>
 
-                    <!-- Duration -->
                     <div class="flex items-start gap-3">
                         <i class="fa-regular fa-clock text-red-600 mt-0.5"></i>
                         <div>
@@ -170,33 +236,27 @@
                             <p class="text-sm text-gray-800">
                                 {{ $durationDays }} {{ \Illuminate\Support\Str::plural('day', $durationDays) }}
                                 <span class="text-gray-400">•</span>
-                                {{ $event->start_date->format('d/m/Y') }}
-                                – {{ $event->end_date->format('d/m/Y') }}
+                                {{ $event->start_date->format('d/m/Y') }} – {{ $event->end_date->format('d/m/Y') }}
                             </p>
                         </div>
                     </div>
 
-                    <!-- Participants -->
                     <div class="flex items-start gap-3">
                         <i class="fa-solid fa-user-group text-red-600 mt-0.5"></i>
                         <div>
                             <p class="text-xs uppercase tracking-wide text-gray-500 font-semibold">Participants</p>
-                            <p class="text-sm text-gray-800">
-                                {{ $event->participants->count() }}
-                            </p>
+                            <p class="text-sm text-gray-800" x-text="participants.length"></p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Footer meta -->
             <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-500">
                 <span>Organized by: <span class="font-medium text-gray-700">{{ $event->organizerDisplayName() ?: '—' }}</span></span>
                 <span>Event duration: {{ $durationDays }} {{ \Illuminate\Support\Str::plural('day', $durationDays) }}</span>
             </div>
         </div>
 
-        <!-- Participants Management -->
         <section id="participants-section" x-show="showParticipants" x-transition class="mt-6 space-y-6" x-cloak>
             @php
                 $participantTableColspan = auth()->user()->can('manage participants') ? 8 : 7;
@@ -214,6 +274,7 @@
                             x-show="selectedParticipantIds.length > 0"
                             x-cloak
                             onsubmit="return confirm('Delete selected participants?')">
+                            @csrf
                             @csrf
                             @method('DELETE')
                             <template x-for="id in selectedParticipantIds" :key="id">
@@ -310,7 +371,6 @@
                                     </td>
 
                                     <td class="px-4 py-2 text-gray-600" x-text="p.vehicle || '—'"></td>
-
                                     <td class="px-4 py-2 text-gray-600" x-text="p.phone || '—'"></td>
 
                                     <td class="px-4 py-2">
@@ -327,8 +387,8 @@
                                         </span>
                                     </td>
 
-                                    @can('manage participants')
                                     <td class="px-4 py-2 text-right">
+                                        @can('manage participants')
                                         <div class="flex justify-end gap-3">
                                             <button type="button"
                                                 @click="openEditModal(p)"
@@ -336,18 +396,16 @@
                                                 <i class="fa-solid fa-pen text-sm"></i>
                                             </button>
 
-                                            <form method="POST" :action="`/events/{{ $event->id }}/participants/${p.id}`">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-500 hover:text-red-700 transition" onclick="return confirm('Delete participant?')">
-                                                    <i class="fa-solid fa-trash text-sm"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button"
+                                                @click="deleteParticipant(p.id)"
+                                                class="text-red-500 hover:text-red-700 transition">
+                                                <i class="fa-solid fa-trash text-sm"></i>
+                                            </button>
                                         </div>
+                                        @else
+                                        <span class="text-gray-400">—</span>
+                                        @endcan
                                     </td>
-                                    @else
-                                    <td class="px-4 py-2 text-right text-gray-400">—</td>
-                                    @endcan
                                 </tr>
                             </template>
                         </tbody>
@@ -357,20 +415,14 @@
 
             <div x-show="openModal" x-cloak class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
                 <div @click.outside="openModal = false" class="bg-white rounded-xl w-full max-w-2xl p-6">
-                    <template x-if="modalType === 'create'">
-                        @include('pages.events.participants._create-form', ['event' => $event])
-                    </template>
-
-                    <template x-if="modalType === 'edit'">
-                        @include('pages.events.participants._edit-form', ['event' => $event])
+                    <template x-if="openModal">
+                        @include('pages.events.participants.manage-form', ['event' => $event])
                     </template>
                 </div>
             </div>
         </section>
 
-        <!-- Main Layout -->
         <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Left: Itinerary List -->
             <aside class="lg:col-span-4">
                 <div class="rounded-xl border border-gray-200 bg-white overflow-hidden">
                     <div class="flex items-center gap-2 px-4 py-3 border-b border-gray-200">
@@ -401,9 +453,7 @@
                 </div>
             </aside>
 
-            <!-- Right: Selected Day Content -->
             <section class="lg:col-span-8 space-y-6">
-                <!-- Day header, image, subtitle -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
                     <div class="mb-3">
                         <h4 class="text-sm font-semibold text-gray-900" x-text="current.title || 'Select a day'"></h4>
@@ -411,8 +461,7 @@
                     </div>
 
                     <template x-if="current.image">
-                        <img :src="`/storage/${current.image}`" alt=""
-                            class="w-full h-56 md:h-64 rounded-lg object-cover">
+                        <img :src="`/storage/${current.image}`" alt="" class="w-full h-56 md:h-64 rounded-lg object-cover">
                     </template>
 
                     <template x-if="!current.image">
@@ -426,8 +475,6 @@
                     </template>
                 </div>
 
-
-                <!-- Key Locations -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
                     <div class="flex items-center gap-2 mb-3">
                         <i class="fa-regular fa-compass text-gray-700"></i>
@@ -452,15 +499,12 @@
                     </template>
                 </div>
 
-                <!-- Event Details -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Itinierary Details</h4>
-
+                    <h4 class="text-sm font-semibold text-gray-900 mb-3">Itinerary Details</h4>
                     <p class="text-lg font-semibold text-gray-700 mb-4" x-text="current.itinerary_title"></p>
                     <div class="text-sm text-gray-700" x-html="current.itinerary_description"></div>
                 </div>
 
-                <!-- Additional Resources -->
                 <div class="rounded-xl border border-gray-200 bg-white p-5">
                     <h4 class="text-sm font-semibold text-gray-900 mb-3">Additional Resources</h4>
 
@@ -481,11 +525,9 @@
             </section>
         </div>
 
-        <!-- Sponsors -->
         <section class="mt-6 rounded-xl border border-gray-200 bg-white p-5">
             <h4 class="text-sm font-semibold text-gray-900">Event Sponsors</h4>
             <p class="text-xs text-gray-500 mb-4">Thank you to our generous sponsors who make this event possible.</p>
-
             <div>
                 @if ($event->sponsor_image_path)
                     <img src="/storage/{{ $event->sponsor_image_path }}" class="w-full md:w-1/3 rounded-lg">
@@ -495,29 +537,4 @@
             </div>
         </section>
     </div>
-
-    <script>
-        function eventShow({
-            days
-        }) {
-            return {
-                days: days || [],
-                selected: 0,
-                get current() {
-                    return this.days[this.selected] || {};
-                },
-                select(idx) {
-                    this.selected = idx;
-                    if (window.innerWidth < 1024) {
-                        setTimeout(() => {
-                            document.querySelector('section.lg\\:col-span-8')?.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'start'
-                            });
-                        }, 0);
-                    }
-                }
-            }
-        }
-    </script>
 </x-app-layout>
