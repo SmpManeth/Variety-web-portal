@@ -308,14 +308,9 @@
 
                 <div class="mb-4">
                     <label for="participant-search" class="block text-xs font-semibold text-gray-600 mb-1">Search participants</label>
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-                            <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                        </span>
                         <input id="participant-search" type="search" placeholder="Name, email, phone, vehicle, roles…"
                             x-model="participantSearch"
-                            class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
-                    </div>
+                            class="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
                 </div>
 
                 <div class="overflow-x-auto">
