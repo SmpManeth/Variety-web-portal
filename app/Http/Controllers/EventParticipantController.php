@@ -78,6 +78,12 @@ final class EventParticipantController extends Controller
         }
 
         $validated = $request->validated();
+        $validated["phone"] = preg_replace(
+            "/[\s\-\(\)]+/",
+            "",
+            $validated["phone"],
+        );
+
         $participant->update($validated);
 
         // Handle role assignment
@@ -227,7 +233,11 @@ final class EventParticipantController extends Controller
                     $first_name = trim($row["A"] ?? "");
                     $last_name = trim($row["B"] ?? "");
                     $email = trim($row["C"] ?? "");
-                    $phone = trim($row["D"] ?? "");
+                    $phone = preg_replace(
+                        "/[\s\-\(\)]+/",
+                        "",
+                        trim($row["D"] ?? ""),
+                    );
                     $vehicle = trim($row["E"] ?? "");
                     $emergencyName = trim($row["G"] ?? "");
                     $emergencyRelation = trim($row["I"] ?? "");
