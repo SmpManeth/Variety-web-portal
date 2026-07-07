@@ -308,9 +308,11 @@
 
                 <div class="mb-4">
                     <label for="participant-search" class="block text-xs font-semibold text-gray-600 mb-1">Search participants</label>
-                        <input id="participant-search" type="search" placeholder="Name, email, phone, vehicle, roles…"
-                            x-model="participantSearch"
-                            class="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200">
+                    <input
+                        id="participant-search" type="search" placeholder="Name, email, phone, vehicle, roles…"
+                        x-model="participantSearch"
+                        class="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
+                    >
                 </div>
 
                 <div class="overflow-x-auto">
@@ -410,9 +412,7 @@
 
             <div x-show="openModal" x-cloak class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
                 <div @click.outside="openModal = false" class="bg-white rounded-xl w-full max-w-2xl p-6">
-                    <template x-if="openModal">
-                        @include('pages.events.participants.manage-form', ['event' => $event])
-                    </template>
+                    @include('pages.events.participants.manage-form', ['event' => $event])
                 </div>
             </div>
         </section>
