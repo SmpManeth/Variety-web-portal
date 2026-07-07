@@ -74,7 +74,7 @@
     </div>
 
     <div class="flex justify-end gap-3">
-        <button type="button" @click="openModal = false" class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button type="button" @click.stop="openModal = false" class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
         <button type="submit" class="px-5 py-2 rounded-lg bg-red-600 text-sm font-semibold text-white hover:bg-red-700 flex items-center gap-2" :disabled="submitting">
             <span x-show="!submitting" x-text="modalType === 'edit' ? 'Save Changes' : 'Add Participant'"></span>
             <span x-show="submitting" class="flex items-center gap-2">
