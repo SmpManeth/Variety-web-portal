@@ -21,6 +21,7 @@ class EventParticipantService
     {
         try {
             $data["event_id"] = $event->id;
+            $data["phone"] = preg_replace("/[\s\-\(\)]+/", "", $data["phone"]);
 
             $participant = EventParticipant::create($data);
 

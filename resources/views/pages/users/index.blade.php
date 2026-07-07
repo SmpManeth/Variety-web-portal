@@ -107,35 +107,35 @@
             <div @click.outside="close()" class="bg-white rounded-2xl w-full max-w-3xl p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4" x-text="mode === 'create' ? 'Add User' : 'Edit User'"></h2>
 
-                <form :action="mode === 'create' ? '{{ route('users.store') }}' : updateAction" method="POST">
-                    @csrf
+                <form @submit.prevent="submitForm" x-ref="form">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <template x-if="mode === 'edit'"><input type="hidden" name="_method" value="PUT"></template>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Username</label>
                             <input name="username" value="{{ old('username') }}" x-model="form.username" required class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('username')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <div x-show="errors.username" x-text="errors.username" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Email</label>
                             <input name="email" type="email" value="{{ old('email') }}" x-model="form.email" required class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('email')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <div x-show="errors.email" x-text="errors.email" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">First Name</label>
                             <input name="first_name" value="{{ old('first_name') }}" x-model="form.first_name" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('first_name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <div x-show="errors.first_name" x-text="errors.first_name" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Last Name</label>
                             <input name="last_name" value="{{ old('last_name') }}" x-model="form.last_name" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('last_name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <div x-show="errors.last_name" x-text="errors.last_name" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Phone</label>
                             <input name="phone" value="{{ old('phone') }}" x-model="form.phone" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('phone')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <div x-show="errors.phone" x-text="errors.phone" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Status</label>
@@ -143,22 +143,22 @@
                                 <option value="active" @selected(old('status')==='active' )>Active</option>
                                 <option value="inactive" @selected(old('status')==='inactive' )>Inactive</option>
                             </select>
-                            @error('status')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <div x-show="errors.status" x-text="errors.status" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Password</label>
-                            <input :required="mode==='create'" name="password" type="password" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('password')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <input :required="mode==='create'" name="password" type="password" x-model="form.password" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
+                            <div x-show="errors.password" x-text="errors.password" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                            <input :required="mode==='create'" name="password_confirmation" type="password" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('password_confirmation')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <input :required="mode==='create'" name="password_confirmation" type="password" x-model="form.password_confirmation" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
+                            <div x-show="errors.password_confirmation" x-text="errors.password_confirmation" class="text-xs text-red-600 mt-1"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Vehicle Code</label>
                             <input name="vehicle_code" value="{{ old('vehicle_code') }}" x-model="form.vehicle_code" class="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500" />
-                            @error('vehicle_code')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                            <div x-show="errors.vehicle_code" x-text="errors.vehicle_code" class="text-xs text-red-600 mt-1"></div>
                         </div>
                     </div>
 
@@ -176,7 +176,6 @@
                                     <span>{{ $role }}</span>
                                 </label>
                                 @endforeach
-
                             </div>
                         </div>
 
@@ -196,13 +195,17 @@
                                 @endforeach
                             </div>
                         </div>
-
                     </div>
 
                     <div class="mt-6 flex justify-end gap-2">
                         <button type="button" @click="close()" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50">Cancel</button>
-                        <button type="submit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 flex items-center gap-2"
+                            :disabled="submitting"
+                        >
                             <span x-text="mode==='create' ? 'Create User' : 'Save Changes'"></span>
+                            <span x-show="submitting" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
                         </button>
                     </div>
                 </form>
@@ -223,13 +226,19 @@
                     phone: '',
                     status: 'active',
                     vehicle_code: '',
+                    password: '',
+                    password_confirmation: '',
                     roles: [],
                     assigned_events: []
                 },
+                errors: {},
+                submitting: false,
+
                 openCreate() {
                     this.mode = 'create';
                     this.updateAction = '';
                     this.form = {
+                        id: '',
                         username: '',
                         email: '',
                         first_name: '',
@@ -237,15 +246,20 @@
                         phone: '',
                         status: 'active',
                         vehicle_code: '',
+                        password: '',
+                        password_confirmation: '',
                         roles: [],
                         assigned_events: []
                     };
+                    this.errors = {};
                     this.open = true;
                 },
+
                 openEdit(user, roles, eventIds) {
                     this.mode = 'edit';
                     this.updateAction = `{{ url('users') }}/${user.id}`;
                     this.form = {
+                        id: user.id,
                         username: user.username,
                         email: user.email,
                         first_name: user.first_name ?? '',
@@ -253,13 +267,56 @@
                         phone: user.phone ?? '',
                         status: user.status,
                         vehicle_code: user.vehicle_code ?? '',
+                        password: '',
+                        password_confirmation: '',
                         roles: roles ?? [],
                         assigned_events: eventIds ?? []
                     };
+                    this.errors = {};
                     this.open = true;
                 },
+
                 close() {
                     this.open = false;
+                },
+
+                async submitForm() {
+                    this.submitting = true;
+                    this.errors = {};
+
+                    try {
+                        const url = this.mode === 'create'
+                            ? '{{ route('users.store') }}'
+                            : `{{ url('users') }}/${this.form.id}`;
+
+                        const response = await fetch(url, {
+                            method: this.mode === 'create' ? 'POST' : 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                            },
+                            body: JSON.stringify(this.form)
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            if (data.errors) {
+                                this.errors = data.errors;
+                            }
+                            throw new Error(data.message || 'Something went wrong');
+                        }
+
+                        // Show success message
+                        if (data.success) {
+                            window.location.href = data.redirect || '{{ url()->current() }}';
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                    } finally {
+                        this.submitting = false;
+                    }
                 }
             }
         }

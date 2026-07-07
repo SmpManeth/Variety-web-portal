@@ -40,13 +40,12 @@ class ParticipantLoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $phone = $this->string("phone");
+        $phone = preg_replace("/[\s\-\(\)]+/", "", $this->string("phone"));
         $password = $this->string("password");
 
-        // Find all event participants with this phone number
-        $eventParticipants = \App\Models\EventParticipant::where(
-            "phone",
-            $phone,
+        $eventParticipants = \App\Models\EventParticipant::whereRaw(
+            "REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '(', ''), ')', '') = ?",
+            [$phone],
         )->get();
 
         if ($eventParticipants->isEmpty()) {

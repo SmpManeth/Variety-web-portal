@@ -16,48 +16,67 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
-        $q = trim((string) $request->get('q'));
+        $q = trim((string) $request->get("q"));
 
         $users = User::query()
-            ->with(['roles:id,name', 'assignedEvents:id,title'])
+            ->with(["roles:id,name", "assignedEvents:id,title"])
             ->when($q, function ($builder) use ($q) {
                 $builder->where(function ($b) use ($q) {
-                    $b->where('username', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%")
-                        ->orWhere('first_name', 'like', "%{$q}%")
-                        ->orWhere('last_name', 'like', "%{$q}%");
+                    $b->where("username", "like", "%{$q}%")
+                        ->orWhere("email", "like", "%{$q}%")
+                        ->orWhere("first_name", "like", "%{$q}%")
+                        ->orWhere("last_name", "like", "%{$q}%");
                 });
             })
-            ->orderBy('username')
+            ->orderBy("username")
             ->paginate(20)
             ->withQueryString();
 
-        return view('pages.users.index', [
-            'users'  => $users,
-            'roles'  => Role::query()->orderBy('name')->pluck('name'),
-            'events' => Event::query()->orderBy('title')->get(['id', 'title']),
-            'q'      => $q,
+        return view("pages.users.index", [
+            "users" => $users,
+            "roles" => Role::query()->orderBy("name")->pluck("name"),
+            "events" => Event::query()
+                ->orderBy("title")
+                ->get(["id", "title"]),
+            "q" => $q,
         ]);
     }
 
-    public function store(StoreUserRequest $request, UserService $service): RedirectResponse
-    {
-        $service->create($request->validated());
+    public function store(
+        StoreUserRequest $request,
+        UserService $service,
+    ): \Illuminate\Http\JsonResponse {
+        $user = $service->create($request->validated());
 
-        return back()->with('success', 'User created successfully.');
+        return response()->json([
+            "success" => true,
+            "message" => "User created successfully.",
+            "user" => $user,
+        ]);
     }
 
-    public function update(UpdateUserRequest $request, User $user, UserService $service): RedirectResponse
-    {
+    public function update(
+        UpdateUserRequest $request,
+        User $user,
+        UserService $service,
+    ): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse {
         $service->update($user, $request->validated());
 
-        return back()->with('success', 'User updated successfully.');
+        if ($request->wantsJson()) {
+            return response()->json([
+                "success" => true,
+                "message" => "User updated successfully.",
+                "user" => $user->fresh(),
+            ]);
+        }
+
+        return back()->with("success", "User updated successfully.");
     }
 
     public function destroy(User $user, UserService $service): RedirectResponse
     {
         $service->delete($user);
 
-        return back()->with('success', 'User deleted.');
+        return back()->with("success", "User deleted.");
     }
 }
