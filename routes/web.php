@@ -21,10 +21,6 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
 
-Route::get("/", function () {
-    return view("welcome");
-});
-
 Route::middleware("auth")->group(function () {
     // App Routes
     // Route::view("/", "pages.dashboard")->name("dashboard");
