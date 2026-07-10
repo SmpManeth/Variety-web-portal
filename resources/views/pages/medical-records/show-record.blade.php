@@ -110,12 +110,10 @@
                     <h4 class="font-bold">Contact Phone</h4>
                     <p class="mb-4">{{$content->nok_phone ?? '—'}}</p>
 
-
                     {{-- Alternate Contact Phone --}}
                     <h4 class="font-bold">Alternate Contact Phone</h4>
                     <p class="mb-4">{{$content->nok_alt_phone ?? '—'}}</p>
                 </div>
-
 
                 <div class="mb-4 rounded-xl bg-white p-4 shadow">
                     <h3 class="text-lg font-bold">Medical Details</h3>
@@ -140,10 +138,6 @@
                     {{-- Current Medical Conditions --}}
                     <h4 class="font-bold">Current Medical Conditions</h4>
                     <p class="mb-4">{{$content->current_medical_history ? $content->current_medical_history : 'None'}}</p>
-
-                    {{-- Past Medical History --}}
-                    <h4 class="font-bold">Past Medical History</h4>
-                    <p class="mb-4">{{$content->past_medical_history ? $content->past_medical_history : 'None'}}</p>
 
                 </div>
 

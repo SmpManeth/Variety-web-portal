@@ -125,7 +125,7 @@
                                     <p class="mt-2 text-xs text-gray-500" x-text="form.csv_filename || 'No file selected (.csv or .txt)'"></p>
                                 </div>
                                 <div class="mt-2">
-                                    <a href="#" class="text-xs text-red-600 hover:text-red-700 font-medium underline">
+                                    <a href="{{route('medical-records.template')}}" class="text-xs text-red-600 hover:text-red-700 font-medium underline">
                                         Download template
                                     </a>
                                 </div>

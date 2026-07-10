@@ -116,6 +116,12 @@ Route::middleware("auth")->group(function () {
         "events.list",
     );
 
+    //to download template
+    Route::get("/medical-records/template", [
+        MedicalRecordController::class,
+        "downloadTemplate",
+    ])->name("medical-records.template");
+
     Route::resource("medical-records", MedicalRecordController::class);
 
     Route::post("medical-records/import", [
