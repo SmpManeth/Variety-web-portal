@@ -30,9 +30,8 @@ class MedicalRecordImageController extends Controller
      */
     public function store(Request $request, Event $event, MedicalRecord $record)
     {
-        // 1. Precise Validation
         $request->validate([
-            "image" => "required|image|mimes:jpeg,png,jpg|max:10240", // Limit to images, max 10MB
+            "image" => "required|file|max:10240", // Max 10MB
         ]);
 
         $file = $request->file("image");
