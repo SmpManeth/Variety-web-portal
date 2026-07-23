@@ -31,11 +31,7 @@ class StoreEventRequest extends FormRequest
             "days.*.image" => ["nullable", "image", "max:4096"],
 
             "days.*.locations" => ["array"],
-            "days.*.locations.*.name" => [
-                "required_with:days.*.locations.*.link_title,days.*.locations.*.link_url",
-                "string",
-                "max:255",
-            ],
+            "days.*.locations.*.name" => ["nullable", "string", "max:255"],
             "days.*.locations.*.link_title" => [
                 "nullable",
                 "string",
