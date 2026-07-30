@@ -121,7 +121,7 @@
 
                     {{-- Date of Birth --}}
                     <h4 class="font-bold">Date of Birth</h4>
-                    <p class="mb-4">{{$content->dob ?? '—'}}</p>
+                    <p class="mb-4">{{ isset($content->dob) ? \Carbon\Carbon::parse($content->dob)->format('d/m/Y') : '—' }}</p>
 
                     {{-- Allergies --}}
                     <h4 class="font-bold">Allergies</h4>
