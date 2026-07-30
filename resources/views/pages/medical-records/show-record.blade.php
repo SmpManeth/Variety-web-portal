@@ -85,12 +85,12 @@
                     {{-- Address --}}
                     <h4 class="font-bold">Address</h4>
                     <p class="mb-4">
-                        {{$content->address1 ?? ''}} <br/>
-                        {{$content->address2 ?? ''}} <br/>
-                        {{$content->address3 ?? ''}} <br/>
-                        {{$content->address4 ?? ''}} <br/>
-                        {{$content->address5 ?? ''}} <br/>
-                        {{$content->address6 ?? ''}}
+                        @if(!empty($content->address1)){{$content->address1}}<br/>@endif
+                        @if(!empty($content->address2)){{$content->address2}}<br/>@endif
+                        @if(!empty($content->address3)){{$content->address3}}<br/>@endif
+                        @if(!empty($content->address4)){{$content->address4}}<br/>@endif
+                        @if(!empty($content->address5)){{$content->address5}}<br/>@endif
+                        @if(!empty($content->address6)){{$content->address6}}@endif
                     </p>
 
                     {{-- Phone --}}
