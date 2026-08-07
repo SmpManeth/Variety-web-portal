@@ -163,11 +163,15 @@
                                 <td class="border border-gray-200 px-3 py-2">{{ $job->event_day }}</td>
                                 <td class="border border-gray-200 px-3 py-2">
                                     @if($job->image_path)
-                                        <a href="{{ $job->image_path }}" target="_blank" class="text-sky-600 hover:underline font-medium">
+                                        <a href="/storage/{{ $job->image_path }}" target="_blank" class="text-sky-600 hover:underline font-medium">
                                             View Image
                                         </a>
                                     @else
-                                        <span class="text-gray-400 italic text-xs">No image</span>
+                                        <form action="{{ route('jobs.upload-image', $job) }}" method="POST" enctype="multipart/form-data" class="upload-form">
+                                            @csrf
+                                            <input type="file" name="image" accept="image/*" onchange="this.form.submit()"
+                                                   class="text-xs text-gray-400 italic">
+                                        </form>
                                     @endif
                                 </td>
                                 <td class="border border-gray-200 px-3 py-2">{{ $job->id }}</td>
