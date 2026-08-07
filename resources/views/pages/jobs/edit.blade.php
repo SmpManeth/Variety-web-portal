@@ -14,7 +14,7 @@
             </div>
         @endif
 
-        <form action="{{ route('jobs.update', $job) }}" method="POST">
+        <form action="{{ route('jobs.update', $job) }}" method="POST" enctype="multipart/form-data">
 
             @csrf
             @method('PUT')
@@ -82,6 +82,11 @@
                     <label class="block text-sm font-medium text-gray-700">Event Day</label>
                     <input type="number" name="event_day" value="{{ old('event_day', $job->event_day) }}"
                         class="mt-1 w-full border rounded p-2">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700">Image</label>
+                    <input type="file" name="image" class="mt-1 w-full border rounded p-2">
                 </div>
 
             </div>

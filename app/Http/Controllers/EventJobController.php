@@ -21,61 +21,58 @@ class EventJobController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'event_id' => 'required|exists:events,id',
-            'csv_file' => 'required|file|mimes:csv,txt'
+            "event_id" => "required|exists:events,id",
+            "csv_file" => "required|file|mimes:csv,txt",
         ]);
 
         $event = Event::findOrFail($request->event_id);
 
         // Delete existing jobs
-        EventJob::where('event_id', $event->id)->delete();
+        EventJob::where("event_id", $event->id)->delete();
 
-        $file = $request->file('csv_file');
+        $file = $request->file("csv_file");
 
-        $handle = fopen($file->getPathname(), 'r');
-
-
+        $handle = fopen($file->getPathname(), "r");
 
         fgetcsv($handle);
 
-        while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-
+        while (($row = fgetcsv($handle, 1000, ",")) !== false) {
             // convert encoding
             $row = array_map(function ($value) {
-
-                if ($value === null) return null;
+                if ($value === null) {
+                    return null;
+                }
 
                 // convert Windows-1252 to UTF-8
-                $value = mb_convert_encoding($value, 'UTF-8', 'Windows-1252');
+                $value = mb_convert_encoding($value, "UTF-8", "Windows-1252");
 
-               
-                $value = iconv('UTF-8', 'UTF-8//IGNORE', $value);
+                $value = iconv("UTF-8", "UTF-8//IGNORE", $value);
 
                 return trim($value);
             }, $row);
 
             EventJob::create([
-                'event_id' => $event->id,
-                'event_day' => $row[0] ?? null,
-                'vehicle' => $row[1] ?? null,
-                'duty_code' => $row[2] ?? null,
-                'duty_description' => $row[3] ?? null,
-                'location' => $row[4] ?? null,
-                'period' => $row[5] ?? null,
-                'km' => $row[6] ?? 0,
-                'ov_arrive' => !empty($row[7]) ? $row[7] : null,
-                'field_arrive' => !empty($row[8]) ? $row[8] : null,
-                'ov_departure' => !empty($row[9]) ? $row[9] : null,
-                'comment' => $row[10] ?? null,
-                'image_path' => null,
+                "event_id" => $event->id,
+                "event_day" => $row[0] ?? null,
+                "vehicle" => $row[1] ?? null,
+                "duty_code" => $row[2] ?? null,
+                "duty_description" => $row[3] ?? null,
+                "location" => $row[4] ?? null,
+                "period" => $row[5] ?? null,
+                "km" => $row[6] ?? 0,
+                "ov_arrive" => !empty($row[7]) ? $row[7] : null,
+                "field_arrive" => !empty($row[8]) ? $row[8] : null,
+                "ov_departure" => !empty($row[9]) ? $row[9] : null,
+                "comment" => $row[10] ?? null,
+                "image_path" => null,
             ]);
         }
 
         fclose($handle);
 
         return redirect()
-            ->route('jobs.index')
-            ->with('success', 'CSV imported successfully');
+            ->route("jobs.index")
+            ->with("success", "CSV imported successfully");
     }
 
     /**
@@ -87,39 +84,47 @@ class EventJobController extends Controller
 
         // Filter by Vehicle
         if ($request->vehicle) {
-            $query->where('vehicle', $request->vehicle);
+            $query->where("vehicle", $request->vehicle);
         }
 
         // Filter by Event Day
         if ($request->event_day) {
-            $query->where('event_day', $request->event_day);
+            $query->where("event_day", $request->event_day);
         }
 
         // Filter by Period
         if ($request->period) {
-            $query->where('period', $request->period);
+            $query->where("period", $request->period);
         }
 
         $jobs = $query->paginate(10)->withQueryString();
 
         // dropdown values
-        $vehicles = $event->jobs()->select('vehicle')->distinct()->pluck('vehicle');
-        $eventDays = $event->jobs()->select('event_day')->distinct()->pluck('event_day');
-        $periods = ['AM', 'PM'];
+        $vehicles = $event
+            ->jobs()
+            ->select("vehicle")
+            ->distinct()
+            ->pluck("vehicle");
+        $eventDays = $event
+            ->jobs()
+            ->select("event_day")
+            ->distinct()
+            ->pluck("event_day");
+        $periods = ["AM", "PM"];
 
-        $events = Event::query()
-            ->withCount("jobs")
-            ->orderByDesc("id")
-            ->get();
+        $events = Event::query()->withCount("jobs")->orderByDesc("id")->get();
 
-        return view("pages.jobs.view", compact(
-            "events",
-            "event",
-            "jobs",
-            "vehicles",
-            "eventDays",
-            "periods"
-        ));
+        return view(
+            "pages.jobs.view",
+            compact(
+                "events",
+                "event",
+                "jobs",
+                "vehicles",
+                "eventDays",
+                "periods",
+            ),
+        );
     }
 
     //edit function
@@ -142,10 +147,11 @@ class EventJobController extends Controller
             "ov_departure" => $request->filled("ov_departure")
                 ? $request->input("ov_departure")
                 : null,
-            "comment" => $request->input("comment") !== null &&
-            $request->input("comment") !== ""
-                ? $request->input("comment")
-                : null,
+            "comment" =>
+                $request->input("comment") !== null &&
+                $request->input("comment") !== ""
+                    ? $request->input("comment")
+                    : null,
         ]);
 
         $validated = $request->validate([
@@ -160,6 +166,7 @@ class EventJobController extends Controller
             "field_arrive" => "nullable|date_format:H:i",
             "ov_departure" => "nullable|date_format:H:i",
             "comment" => "nullable|string",
+            "image" => "nullable|file",
         ]);
 
         $job->update([
@@ -174,6 +181,9 @@ class EventJobController extends Controller
             "field_arrive" => $validated["field_arrive"],
             "ov_departure" => $validated["ov_departure"],
             "comment" => $validated["comment"],
+            "image_path" => $request->hasFile("image")
+                ? $request->file("image")->store("jobs", "public")
+                : "",
         ]);
 
         return redirect()
@@ -191,6 +201,24 @@ class EventJobController extends Controller
         return redirect()
             ->route("jobs.view", $event)
             ->with("success", "Jobs deleted successfully.");
+    }
+
+    /**
+     * Upload an image for a job.
+     */
+    public function uploadImage(Request $request, EventJob $job)
+    {
+        $request->validate([
+            "image" => "required|image|mimes:jpeg,png,jpg,gif|max:2048",
+        ]);
+
+        $path = $request->file("image")->store("jobs", "public");
+
+        $job->update(["image_path" => $path]);
+
+        return redirect()
+            ->route("jobs.view", $job->event_id)
+            ->with("success", "Image uploaded successfully.");
     }
 
     //to download the csv template
@@ -214,12 +242,11 @@ class EventJobController extends Controller
             "ov_arrive",
             "field_arrive",
             "ov_departure",
-            "comment"
+            "comment",
         ];
 
         $callback = function () use ($columns) {
-
-            $file = fopen('php://output', 'w');
+            $file = fopen("php://output", "w");
 
             fputcsv($file, $columns);
 

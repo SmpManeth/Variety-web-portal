@@ -55,6 +55,10 @@ Route::middleware("auth")->group(function () {
     Route::put("/job/{job}", [EventJobController::class, "update"])->name(
         "jobs.update",
     );
+    Route::post("/job/{job}/upload-image", [
+        EventJobController::class,
+        "uploadImage",
+    ])->name("jobs.upload-image");
     //Events
     Route::resource("events", EventController::class);
     Route::resource("events.admins", EventAdminController::class)->only(
