@@ -209,7 +209,7 @@ class EventJobController extends Controller
     public function uploadImage(Request $request, EventJob $job)
     {
         $request->validate([
-            "image" => "required|image|mimes:jpeg,png,jpg,gif|max:2048",
+            "image" => "required|file",
         ]);
 
         $path = $request->file("image")->store("jobs", "public");
