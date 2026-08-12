@@ -35,9 +35,9 @@
                     class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-gray-50">
                     View event
                 </a>
-                <a href="{{ route('events.edit', $event) }}"
+                <a href="{{ route('job-images.index', $event) }}"
                     class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-gray-50">
-                    Edit event
+                        View Images
                 </a>
                 <button type="button"
                     @click="openImportModal({{ $event->id }}, @js($event->title))"
@@ -167,11 +167,9 @@
                                             View Image
                                         </a>
                                     @else
-                                        <form action="{{ route('jobs.upload-image', $job) }}" method="POST" enctype="multipart/form-data" class="upload-form">
-                                            @csrf
-                                            <input type="file" name="image" accept="image/*" onchange="this.form.submit()"
-                                                   class="text-xs text-gray-400 italic">
-                                        </form>
+                                        <a class="text-gray-300 hover:underline font-medium">
+                                            No Image
+                                        </a>
                                     @endif
                                 </td>
                                 <td class="border border-gray-200 px-3 py-2">{{ $job->id }}</td>
