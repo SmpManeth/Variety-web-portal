@@ -31,9 +31,9 @@
         <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
 
             <div class="mb-3 flex flex-wrap items-center gap-2">
-                <a href="{{ route('events.index') }}"
+                <a href="{{ route('events.show', $event) }}"
                     class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-gray-50">
-                    View events
+                    View event
                 </a>
                 <a href="{{ route('events.edit', $event) }}"
                     class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-gray-50">

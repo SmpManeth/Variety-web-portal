@@ -40,6 +40,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $event->jobs->count() }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-end text-sm">
                                 <div class="inline-flex items-center justify-center gap-2">
+                                    <a
+                                        href="{{ route('job-images.index', $event)}}"
+                                        class="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-gray-50">
+                                        <i class="fa-regular fa-image"></i>
+                                        Images
+                                    </a>
                                     <button type="button"
                                         @click="openImportModal({{ $event->id }}, @js($event->title))"
                                         class="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-gray-50">

@@ -64,7 +64,7 @@ class EventJobController extends Controller
                 "field_arrive" => !empty($row[8]) ? $row[8] : null,
                 "ov_departure" => !empty($row[9]) ? $row[9] : null,
                 "comment" => $row[10] ?? null,
-                "image_path" => null,
+                "image_path" => "jobs/$event->id/$row[11]",
             ]);
         }
 
@@ -243,6 +243,7 @@ class EventJobController extends Controller
             "field_arrive",
             "ov_departure",
             "comment",
+            "image",
         ];
 
         $callback = function () use ($columns) {
