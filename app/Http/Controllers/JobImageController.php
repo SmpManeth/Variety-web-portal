@@ -35,7 +35,7 @@ class JobImageController extends Controller
     {
         $validator = Validator::make($request->all(), [
             "images" => "required|array",
-            "images.*" => "required|file|mimes:jpeg,jpg,jpg,webp|max:4096",
+            "images.*" => "required|file|mimes:jpeg,jpg,png,webp|max:4096",
         ]);
 
         if ($validator->fails()) {
