@@ -85,8 +85,8 @@
                 </div>
 
                 <div class="col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Image</label>
-                    <input type="file" name="image" class="mt-1 w-full border rounded p-2">
+                    <label class="block text-sm font-medium text-gray-700">Image (File Name)</label>
+                    <input type="text" name="image" value="{{ old('image', basename($job->image_path)) }}" class="mt-1 w-full border rounded p-2">
                 </div>
 
             </div>

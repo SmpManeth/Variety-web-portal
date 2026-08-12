@@ -6,6 +6,7 @@ use App\Http\Controllers\EventFormController;
 use App\Http\Controllers\EventJobController;
 use App\Http\Controllers\EventParticipantController;
 use App\Http\Controllers\EventPermitController;
+use App\Http\Controllers\JobImageController;
 use App\Http\Controllers\MedicalRecordCollectionController;
 use App\Http\Controllers\MedicalRecordCommentController;
 use App\Http\Controllers\MedicalRecordController;
@@ -34,7 +35,7 @@ Route::middleware("auth")->group(function () {
     Route::post("/jobs/", [EventJobController::class, "store"])->name(
         "jobs.store",
     );
-    //to download template
+
     Route::get("/jobs/template", [
         EventJobController::class,
         "downloadTemplate",
@@ -59,6 +60,23 @@ Route::middleware("auth")->group(function () {
         EventJobController::class,
         "uploadImage",
     ])->name("jobs.upload-image");
+
+    // Job Images
+    Route::get("/job-images/{event}", [
+        JobImageController::class,
+        "index",
+    ])->name("job-images.index");
+
+    Route::post("/job-images/{event}", [
+        JobImageController::class,
+        "store",
+    ])->name("job-images.store");
+
+    Route::delete("/job-images/{event}/{jobImage}", [
+        JobImageController::class,
+        "destroy",
+    ])->name("job-images.index");
+
     //Events
     Route::resource("events", EventController::class);
     Route::resource("events.admins", EventAdminController::class)->only(

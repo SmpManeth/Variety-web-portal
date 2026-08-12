@@ -12,23 +12,23 @@ class Event extends Model
     use HasFactory;
 
     protected $fillable = [
-        'created_by',
-        'title',
-        'description',
-        'start_date',
-        'end_date',
-        'sponsor_image_path',
-        'cover_image_path',
+        "created_by",
+        "title",
+        "description",
+        "start_date",
+        "end_date",
+        "sponsor_image_path",
+        "cover_image_path",
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        "start_date" => "date",
+        "end_date" => "date",
     ];
 
     public function days()
     {
-        return $this->hasMany(EventDay::class)->orderBy('sort_order');
+        return $this->hasMany(EventDay::class)->orderBy("sort_order");
     }
 
     public function participants()
@@ -38,16 +38,16 @@ class Event extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, "created_by");
     }
 
     public function admins()
     {
         return $this->belongsToMany(
             User::class,
-            'event_admin',
-            'event_id',
-            'user_id',
+            "event_admin",
+            "event_id",
+            "user_id",
         )->withTimestamps();
     }
 
@@ -58,35 +58,39 @@ class Event extends Model
     public function organizer(): ?User
     {
         if ($this->created_by) {
-            return $this->relationLoaded('creator') ? $this->creator : $this->creator()->first();
+            return $this->relationLoaded("creator")
+                ? $this->creator
+                : $this->creator()->first();
         }
 
-        if ($this->relationLoaded('admins')) {
-            return $this->admins->sortBy(fn (User $u) => $u->pivot->created_at)->first();
+        if ($this->relationLoaded("admins")) {
+            return $this->admins
+                ->sortBy(fn(User $u) => $u->pivot->created_at)
+                ->first();
         }
 
-        return $this->admins()->orderBy('event_admin.created_at')->first();
+        return $this->admins()->orderBy("event_admin.created_at")->first();
     }
 
     public function organizerDisplayName(): string
     {
         $user = $this->organizer();
-        if (! $user) {
-            return '';
+        if (!$user) {
+            return "";
         }
 
         $name = trim((string) $user->name);
 
-        return $name !== '' ? $name : $user->full_name;
+        return $name !== "" ? $name : $user->full_name;
     }
 
     public function isAdmin(User $user)
     {
-        if ($user->hasRole('Super Admin')) {
+        if ($user->hasRole("Super Admin")) {
             return true;
         }
 
-        return $this->admins()->where('user_id', $user->id)->exists();
+        return $this->admins()->where("user_id", $user->id)->exists();
     }
 
     /**
@@ -94,7 +98,7 @@ class Event extends Model
      */
     public function notifications()
     {
-        return $this->belongsToMany(Notification::class, 'notification_event');
+        return $this->belongsToMany(Notification::class, "notification_event");
     }
 
     public function medicalRecords()
@@ -115,5 +119,10 @@ class Event extends Model
     public function jobs()
     {
         return $this->hasMany(EventJob::class);
+    }
+
+    public function jobImages()
+    {
+        return $this->hasMany(JobImage::class);
     }
 }

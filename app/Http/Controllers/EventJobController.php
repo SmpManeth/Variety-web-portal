@@ -64,7 +64,7 @@ class EventJobController extends Controller
                 "field_arrive" => !empty($row[8]) ? $row[8] : null,
                 "ov_departure" => !empty($row[9]) ? $row[9] : null,
                 "comment" => $row[10] ?? null,
-                "image_path" => null,
+                "image_path" => "jobs/$event->id/$row[11]",
             ]);
         }
 
@@ -166,7 +166,7 @@ class EventJobController extends Controller
             "field_arrive" => "nullable|date_format:H:i",
             "ov_departure" => "nullable|date_format:H:i",
             "comment" => "nullable|string",
-            "image" => "nullable|file",
+            "image" => "nullable|string",
         ]);
 
         $job->update([
@@ -181,9 +181,9 @@ class EventJobController extends Controller
             "field_arrive" => $validated["field_arrive"],
             "ov_departure" => $validated["ov_departure"],
             "comment" => $validated["comment"],
-            "image_path" => $request->hasFile("image")
-                ? $request->file("image")->store("jobs", "public")
-                : "",
+            "image_path" => $request->has("image")
+                ? "jobs/$job->event_id/$request->image"
+                : $job->image || "",
         ]);
 
         return redirect()
@@ -243,6 +243,7 @@ class EventJobController extends Controller
             "field_arrive",
             "ov_departure",
             "comment",
+            "image",
         ];
 
         $callback = function () use ($columns) {
