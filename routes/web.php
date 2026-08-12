@@ -75,7 +75,7 @@ Route::middleware("auth")->group(function () {
     Route::delete("/job-images/{event}/{jobImage}", [
         JobImageController::class,
         "destroy",
-    ])->name("job-images.index");
+    ])->name("job-images.destroy");
 
     //Events
     Route::resource("events", EventController::class);
